@@ -45,6 +45,8 @@
         </button>
       </form>
 
+      <p class="text-lg font-medium mt-8">Raum</p>
+
       <div
         class="w-full aspect-square max-h-[calc(100dvh-40px)] bg-gray-200 rounded-lg shadow-md mt-4 p-4"
       >
@@ -64,6 +66,21 @@
         Rechteck
         hinzufügen
       </button>
+
+      <p class="text-lg font-medium mt-8">Platten</p>
+
+      <div
+        class="w-full aspect-square max-h-[calc(100dvh-40px)] bg-gray-200 rounded-lg shadow-md mt-4 p-4"
+      >
+        <canvas
+          id="platten"
+          ref="canvasPlatten"
+          :width="widthOfCanvas * 1.02"
+          :height="widthOfCanvas * 1.02"
+          class="w-full h-full bg-gray-200"
+        ></canvas>
+      </div>
+
       <AddRechteckDialog
         :show-dialog="showAddRechteckDialog"
         :x-position="clickPosition.x"
@@ -101,15 +118,13 @@ const vinylPlatten = ref([
     laenge: 63.6,
     breite: 31.9,
   },
-  {
-    laenge: 152,
-    breite: 23.8,
-  },
-
+  // {
+  //   laenge: 152,
+  //   breite: 23.8,
+  // },
 ])
 
 function removeVinylPlatte (index) {
-  console.log('removeVinylPlatte');
   vinylPlatten.value.splice(index, 1)
 }
 
@@ -124,6 +139,8 @@ const clickPosition = ref({
 
 const canvas = ref(null)
 const ctx = ref(null)
+const canvasPlatten = ref(null)
+const ctxPlatten = ref(null)
 // const rechtecke = ref([
 //   { x1: 0, y1: 0, x2: 482, y2: 327 },
 //   { x1: 482 - 327, y1: 327, x2: 482, y2: 572 },
@@ -189,6 +206,7 @@ const rechtecke = ref([
 
 onMounted(() => {
   ctx.value = canvas.value.getContext('2d')
+  ctxPlatten.value = canvasPlatten.value.getContext('2d')
 
   drawCanvas()
 
@@ -196,10 +214,13 @@ onMounted(() => {
 })
 
 function drawCanvas () {
-  ctx.value.clearRect(0, 0, canvas.value.width, canvas.value.height)
-  drawRechtecke()
+  drawRaumCanvas()
+  drawPlattenCanvas()
+}
 
-  drawVinylPlatten()
+function drawRaumCanvas () {
+  ctx.value.clearRect(0, 0, canvasPlatten.value.width, canvasPlatten.value.height)
+  drawRechtecke()
 
   drawRedDot()
   drawBlueDot()
@@ -218,16 +239,21 @@ function drawRechtecke () {
   })
 }
 
+function drawPlattenCanvas () {
+  ctxPlatten.value.clearRect(0, 0, canvasPlatten.value.width, canvasPlatten.value.height)
+  drawVinylPlatten()
+}
+
 function drawVinylPlatten () {
   const abstand = 50
 
   vinylPlatten.value.forEach((platte, index) => {
-    ctx.value.lineWidth = 2;
-    ctx.value.strokeStyle = 'black';
-    ctx.value.beginPath()
-    ctx.value.rect(abstandX, maxYOfRechtecke.value + abstand * (index + 1), platte.laenge, platte.breite)
+    ctxPlatten.value.lineWidth = 2;
+    ctxPlatten.value.strokeStyle = 'black';
+    ctxPlatten.value.beginPath()
+    ctxPlatten.value.rect(abstandX, abstandY + abstand * (index), platte.laenge, platte.breite)
     // Stroke width of 2 and red color
-    ctx.value.stroke()
+    ctxPlatten.value.stroke()
   })
 }
 
@@ -243,16 +269,8 @@ const maxYOfRechtecke = computed(() => {
   ).flat())
 })
 
-const maxY = computed(() => {
-  return maxYOfRechtecke.value + 50 * vinylPlatten.value.length + vinylPlatten.value.reduce((acc, platte) => acc + platte.breite, 0)
-})
-
-const maxWidthOfRechtecke = computed(() => {
-  return Math.max(maxXOfRechtecke.value, maxYOfRechtecke.value)
-})
-
 const widthOfCanvas = computed(() => {
-  return Math.max(maxWidthOfRechtecke.value, maxY.value)
+  return Math.max(maxXOfRechtecke.value, maxYOfRechtecke.value)
 })
 
 const showAddRechteckDialog = ref(false)
@@ -279,13 +297,13 @@ function removeRechteck (index) {
 }
 
 function getMousePos (canvas, evt) {
-  var rect = canvas.getBoundingClientRect(), // abs. size of element
-    scaleX = canvas.width / rect.width,    // relationship bitmap vs. element for x
-    scaleY = canvas.height / rect.height;  // relationship bitmap vs. element for y
+  var rect = canvas.getBoundingClientRect(),
+    scaleX = canvas.width / rect.width,
+    scaleY = canvas.height / rect.height;
 
   return {
-    x: (evt.clientX - rect.left) * scaleX,   // scale mouse coordinates after they have
-    y: (evt.clientY - rect.top) * scaleY     // been adjusted to be relative to element
+    x: (evt.clientX - rect.left) * scaleX,
+    y: (evt.clientY - rect.top) * scaleY
   }
 }
 
@@ -468,28 +486,30 @@ function addEventListenersForCanvas () {
     drawCanvas()
   })
 
-  canvas.value.addEventListener('click', (event) => {
-    if (
-      redDot.value.x !== null && redDot.value.y !== null
-      && blueDot.value.x !== null && blueDot.value.y !== null
-    ) {
-      return
-    }
-
-    // const mousePos = getMousePos(canvas.value, event)
-
-    if (blueDot.value.x !== null && blueDot.value.y !== null) {
-      clickPosition.value.x = blueDot.value.x
-      clickPosition.value.y = blueDot.value.y
-    } else if (redDot.value.x !== null && redDot.value.y !== null) {
-      clickPosition.value.x = redDot.value.x
-      clickPosition.value.y = redDot.value.y
-    }
-
-    console.log('clickPosition.value', clickPosition.value);
-    snackbarText.value = 'Position zum Hinzufügen des Rechtecks gespeichert'
+  canvas.value.addEventListener('click', handleClickOnCanvas)
+  canvas.value.addEventListener('dblclick', (event) => {
+    handleClickOnCanvas(event)
+    openAddRechteckDialog()
   })
+}
 
+function handleClickOnCanvas (event) {
+  if (
+    redDot.value.x !== null && redDot.value.y !== null
+    && blueDot.value.x !== null && blueDot.value.y !== null
+  ) {
+    return
+  }
+
+  if (blueDot.value.x !== null && blueDot.value.y !== null) {
+    clickPosition.value.x = blueDot.value.x
+    clickPosition.value.y = blueDot.value.y
+  } else if (redDot.value.x !== null && redDot.value.y !== null) {
+    clickPosition.value.x = redDot.value.x
+    clickPosition.value.y = redDot.value.y
+  }
+
+  snackbarText.value = 'Position zum Hinzufügen des Rechtecks gespeichert'
 }
 
 const redDot = ref({

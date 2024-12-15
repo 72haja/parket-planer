@@ -10,7 +10,8 @@
         <label class="block text-lg font-medium mb-2">
           Höhe
           <input
-            type="float"
+            type="number"
+            step="0.1"
             v-model="hoehe"
             class="w-full p-2 pl-10 text-lg border border-gray-400 rounded-lg focus:outline-none focus:ring focus:ring-blue-500"
           />
@@ -18,7 +19,8 @@
         <label class="block text-lg font-medium mb-2">
           Breite
           <input
-            type="float"
+            type="number"
+            step="0.1"
             v-model="breite"
             class="w-full p-2 pl-10 text-lg border border-gray-400 rounded-lg focus:outline-none focus:ring focus:ring-blue-500"
           />
@@ -26,7 +28,8 @@
         <label class="block text-lg font-medium mb-2">
           X Position
           <input
-            type="float"
+            type="number"
+            step="0.1"
             v-model="posX"
             class="w-full p-2 pl-10 text-lg border border-gray-400 rounded-lg focus:outline-none focus:ring focus:ring-blue-500"
           />
@@ -34,7 +37,8 @@
         <label class="block text-lg font-medium mb-2">
           Y Position
           <input
-            type="float"
+            type="number"
+            step="0.1"
             v-model="posY"
             class="w-full p-2 pl-10 text-lg border border-gray-400 rounded-lg focus:outline-none focus:ring focus:ring-blue-500"
           />

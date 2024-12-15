@@ -3,46 +3,24 @@
     <div class="max-w-screen-2xl mx-auto p-4 md:p-6 lg:p-8 bg-white rounded-lg shadow-md">
       <h1 class="text-3xl font-bold mb-4">Vinyl-Platten-Rechner</h1>
       <form class="flex flex-col">
-        <template
-          v-for="(platte, index) in vinylPlatten"
-          :key="'platte_' + index"
-        >
-          <div class="flex gap-4 items-center">
-            <div class="w-full grid gap-2">
-              <label class="block text-lg font-medium">
-                Länge der Vinyl-Platte:
-                <input
-                  type="number"
-                  v-model="platte.laenge"
-                  class="w-full p-2 pl-10 text-lg border border-gray-400 rounded-lg focus:outline-none focus:ring focus:ring-blue-500"
-                />
-              </label>
-              <label class="block text-lg font-medium">
-                Breite der Vinyl-Platte:
-                <input
-                  type="number"
-                  v-model="platte.breite"
-                  class="w-full p-2 pl-10 text-lg border border-gray-400 rounded-lg focus:outline-none focus:ring focus:ring-blue-500"
-                />
-              </label>
-
-              <div
-                v-if="index !== vinylPlatten.length - 1"
-                class="m-2 h-[1px] bg-gray-400"
-              >
-              </div>
-            </div>
-
-            <CloseButton @click="removeVinylPlatte(index)" />
-          </div>
-        </template>
-
-        <button
-          @click="vinylPlatten.push({ laenge: 0, breite: 0 })"
-          class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg mt-4"
-        >
-          weitere Vinyl-Platte hinzufügen
-        </button>
+        <div class="w-full grid gap-2">
+          <label class="block text-lg font-medium">
+            Länge der Vinyl-Platte:
+            <input
+              type="number"
+              v-model="plattenLaenge"
+              class="w-full p-2 pl-10 text-lg border border-gray-400 rounded-lg focus:outline-none focus:ring focus:ring-blue-500"
+            />
+          </label>
+          <label class="block text-lg font-medium">
+            Breite der Vinyl-Platte:
+            <input
+              type="number"
+              v-model="plattenBreite"
+              class="w-full p-2 pl-10 text-lg border border-gray-400 rounded-lg focus:outline-none focus:ring focus:ring-blue-500"
+            />
+          </label>
+        </div>
       </form>
 
       <p class="text-lg font-medium mt-8">Raum</p>
@@ -53,8 +31,8 @@
         <canvas
           id="raum"
           ref="canvas"
-          :width="widthOfCanvas * 1.02"
-          :height="widthOfCanvas * 1.02"
+          :width="widthOfCanvas"
+          :height="widthOfCanvas"
           class="w-full h-full bg-gray-200"
         ></canvas>
       </div>
@@ -69,14 +47,26 @@
 
       <p class="text-lg font-medium mt-8">Platten</p>
 
+      <label
+        class="block text-lg font-medium"
+      >
+        Versatz:
+        <input
+          type="number"
+          step="0.01"
+          v-model="versatz"
+          class="w-full p-2 pl-10 text-lg border border-gray-400 rounded-lg focus:outline-none focus:ring focus:ring-blue-500"
+        />
+      </label>
+
       <div
         class="w-full aspect-square max-h-[calc(100dvh-40px)] bg-gray-200 rounded-lg shadow-md mt-4 p-4"
       >
         <canvas
           id="platten"
           ref="canvasPlatten"
-          :width="widthOfCanvas * 1.02"
-          :height="widthOfCanvas * 1.02"
+          :width="widthOfCanvas"
+          :height="widthOfCanvas"
           class="w-full h-full bg-gray-200"
         ></canvas>
       </div>
@@ -113,24 +103,11 @@ import Snackbar from './components/Snackbar.vue';
 
 const snackbarText = ref('')
 
-const vinylPlatten = ref([
-  {
-    laenge: 63.6,
-    breite: 31.9,
-  },
-  // {
-  //   laenge: 152,
-  //   breite: 23.8,
-  // },
-])
+// const plattenLaenge = ref(63.6)
+// const plattenBreite = ref(31.9)
 
-function removeVinylPlatte (index) {
-  vinylPlatten.value.splice(index, 1)
-}
-
-watch(vinylPlatten, (newValue) => {
-  drawCanvas()
-}, { deep: true })
+const plattenBreite = ref(23.8)
+const plattenLaenge = ref(152)
 
 const clickPosition = ref({
   x: 0,
@@ -239,6 +216,12 @@ function drawRechtecke () {
   })
 }
 
+const versatz = ref(0.5)
+
+watch(versatz, () => {
+  drawPlattenCanvas()
+})
+
 function drawPlattenCanvas () {
   ctxPlatten.value.clearRect(0, 0, canvasPlatten.value.width, canvasPlatten.value.height)
   drawVinylPlatten()
@@ -247,14 +230,19 @@ function drawPlattenCanvas () {
 function drawVinylPlatten () {
   const abstand = 50
 
-  vinylPlatten.value.forEach((platte, index) => {
-    ctxPlatten.value.lineWidth = 2;
-    ctxPlatten.value.strokeStyle = 'black';
-    ctxPlatten.value.beginPath()
-    ctxPlatten.value.rect(abstandX, abstandY + abstand * (index), platte.laenge, platte.breite)
-    // Stroke width of 2 and red color
-    ctxPlatten.value.stroke()
-  })
+  const amountOfPlattenX = Math.floor(widthOfCanvas.value / plattenLaenge.value)
+  const amountOfPlattenY = Math.floor(widthOfCanvas.value / plattenBreite.value)
+
+  for (let i = 0; i < amountOfPlattenX; i++) {
+    for (let j = 0; j < amountOfPlattenY; j++) {
+      ctxPlatten.value.lineWidth = 1;
+      ctxPlatten.value.strokeStyle = 'gray';
+      ctxPlatten.value.beginPath()
+      const versatzValue = j % 2 === 1 ? versatz.value * plattenLaenge.value : 0
+      ctxPlatten.value.rect(abstandX + i * plattenLaenge.value + versatzValue, abstandY + j * plattenBreite.value, plattenLaenge.value, plattenBreite.value)
+      ctxPlatten.value.stroke()
+    }
+  }
 }
 
 const maxXOfRechtecke = computed(() => {
@@ -270,7 +258,7 @@ const maxYOfRechtecke = computed(() => {
 })
 
 const widthOfCanvas = computed(() => {
-  return Math.max(maxXOfRechtecke.value, maxYOfRechtecke.value)
+  return Math.max(maxXOfRechtecke.value, maxYOfRechtecke.value) * 1.1
 })
 
 const showAddRechteckDialog = ref(false)

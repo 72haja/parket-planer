@@ -25,17 +25,26 @@
 
       <p class="text-lg font-medium mt-8">Raum</p>
 
-      <div
-        class="w-full aspect-square max-h-[calc(100dvh-40px)] bg-gray-200 rounded-lg shadow-md mt-4 p-4"
-      >
-        <canvas
-          id="raum"
-          ref="canvas"
-          :width="widthOfCanvas"
-          :height="widthOfCanvas"
-          class="w-full h-full bg-gray-200"
-        ></canvas>
+      <div class="grid grid-cols-[minmax(0,1fr)_max-content] grid-rows-[minmax(0,1fr)_max-content] items-center justify-items-center gap-2">
+        <div
+          class="w-full aspect-square max-h-[calc(100dvh-40px)] bg-gray-200 rounded-lg shadow-md mt-4 p-4"
+        >
+          <canvas
+            id="raum"
+            ref="canvas"
+            :width="widthOfCanvas"
+            :height="widthOfCanvas"
+            class="w-full h-full bg-gray-200"
+          ></canvas>
+        </div>
+
+        <AddButton class="w-max h-max" @click="() => canvasWidthIncrease += 50" />
+        <AddButton class="w-max h-max" @click="() => canvasWidthIncrease += 50" />
       </div>
+
+      <p>widthOfCanvas {{widthOfCanvas}}</p>
+      <p>maxXOfRechtecke {{maxXOfRechtecke}}</p>
+      <p>maxYOfRechtecke {{maxYOfRechtecke}}</p>
 
       <button
         @click="openAddRechteckDialog"
@@ -45,11 +54,50 @@
         hinzufügen
       </button>
 
+      <div class="grid gap-2 p-4">
+        <div
+          class="flex items-center gap-2"
+          v-for="(rechteck, index) in rechtecke"
+          :key="index"
+        >
+          <span> Rechteck {{ index }}</span>
+          <label
+            class="block text-lg font-medium"
+          >
+            Breite:
+            <input
+              type="number"
+              step="0.5"
+              :value="getBreite(rechteck)"
+              class="w-full p-2 pl-10 text-lg border border-gray-400 rounded-lg focus:outline-none focus:ring focus:ring-blue-500"
+              @input="(event) => {
+                handleUpdateBreite(rechteck, event.target.value)
+                drawCanvas()
+              }"
+            />
+          </label>
+          <label
+            class="block text-lg font-medium"
+          >
+            Höhe:
+            <input
+              type="number"
+              step="0.5"
+              :value="getHoehe(rechteck)"
+              class="w-full p-2 pl-10 text-lg border border-gray-400 rounded-lg focus:outline-none focus:ring focus:ring-blue-500"
+              @input="(event) => {
+                handleUpdateHoehe(rechteck, event.target.value)
+                drawCanvas()
+              }"
+            />
+          </label>
+          <CloseButton @click="removeRechteck(index)" />
+        </div>
+      </div>
+
       <p class="text-lg font-medium mt-8">Platten</p>
 
-      <label
-        class="block text-lg font-medium"
-      >
+      <label class="block text-lg font-medium">
         Versatz:
         <input
           type="number"
@@ -78,17 +126,6 @@
         @save="addRechteck"
         @close="closeAddRechteckDialog"
       />
-
-      <div class="grid gap-2 p-4">
-        <div
-          class="flex items-center gap-2"
-          v-for="(rechteck, index) in rechtecke"
-          :key="index"
-        >
-          <span> Rechteck {{ index }}</span>
-          <CloseButton @click="removeRechteck(index)" />
-        </div>
-      </div>
     </div>
 
     <Snackbar v-model:text="snackbarText" />
@@ -100,6 +137,7 @@ import { ref, onMounted, computed, watch } from 'vue'
 import AddRechteckDialog from './components/AddRechteckDialog.vue'
 import CloseButton from './components/CloseButton.vue';
 import Snackbar from './components/Snackbar.vue';
+import AddButton from './components/AddButton.vue';
 
 const snackbarText = ref('')
 
@@ -196,7 +234,8 @@ function drawCanvas () {
 }
 
 function drawRaumCanvas () {
-  ctx.value.clearRect(0, 0, canvasPlatten.value.width, canvasPlatten.value.height)
+  ctx.value.clearRect(0, 0, canvas.value.width, canvas.value.height)
+
   drawRechtecke()
 
   drawRedDot()
@@ -248,17 +287,19 @@ function drawVinylPlatten () {
 const maxXOfRechtecke = computed(() => {
   return Math.max(...rechtecke.value.map(
     (rechteck) => [ rechteck.x1, rechteck.x2 ]
-  ).flat())
+  ).flat()) + canvasWidthIncrease.value
 })
 
 const maxYOfRechtecke = computed(() => {
   return Math.max(...rechtecke.value.map(
     (rechteck) => [ rechteck.y1, rechteck.y2 ]
-  ).flat())
+  ).flat()) + canvasWidthIncrease.value
 })
 
+const canvasWidthIncrease = ref(0)
+
 const widthOfCanvas = computed(() => {
-  return Math.max(maxXOfRechtecke.value, maxYOfRechtecke.value) * 1.1
+  return (Math.max(maxXOfRechtecke.value, maxYOfRechtecke.value) + canvasWidthIncrease.value) * 1.1
 })
 
 const showAddRechteckDialog = ref(false)
@@ -272,6 +313,7 @@ function closeAddRechteckDialog () {
 }
 
 function addRechteck (rechteck) {
+  console.log('addRechteck');
   // Rechteck-Objekt speichern
   rechtecke.value.push(rechteck)
   closeAddRechteckDialog()
@@ -310,6 +352,7 @@ function checkForBlueDot (rechteck, mouseXOnCanvas, mouseYOnCanvas, snapDistance
       distance: Math.abs(rechteck.x1 - mouseXOnCanvas) + Math.abs(rechteck.y1 - mouseYOnCanvas),
       x: rechteck.x1,
       y: rechteck.y1,
+      isDragging: rechteck.isDragging,
     })
   }
   if (
@@ -320,6 +363,7 @@ function checkForBlueDot (rechteck, mouseXOnCanvas, mouseYOnCanvas, snapDistance
       distance: Math.abs(rechteck.x2 - mouseXOnCanvas) + Math.abs(rechteck.y1 - mouseYOnCanvas),
       x: rechteck.x2,
       y: rechteck.y1,
+      isDragging: rechteck.isDragging,
     })
   }
   if (
@@ -330,6 +374,7 @@ function checkForBlueDot (rechteck, mouseXOnCanvas, mouseYOnCanvas, snapDistance
       distance: Math.abs(rechteck.x1 - mouseXOnCanvas) + Math.abs(rechteck.y2 - mouseYOnCanvas),
       x: rechteck.x1,
       y: rechteck.y2,
+      isDragging: rechteck.isDragging,
     })
   }
   if (
@@ -340,6 +385,7 @@ function checkForBlueDot (rechteck, mouseXOnCanvas, mouseYOnCanvas, snapDistance
       distance: Math.abs(rechteck.x2 - mouseXOnCanvas) + Math.abs(rechteck.y2 - mouseYOnCanvas),
       x: rechteck.x2,
       y: rechteck.y2,
+      isDragging: rechteck.isDragging,
     })
   }
 
@@ -360,6 +406,7 @@ function checkForRedDot (rechteck, mouseXOnCanvas, mouseYOnCanvas, snapDistanceR
       y: roundToNextHalf(mouseYOnCanvas),
       x1: rechteck.x1,
       y1: rechteck.y1,
+      isDragging: rechteck.isDragging,
     })
   }
   if (
@@ -373,6 +420,7 @@ function checkForRedDot (rechteck, mouseXOnCanvas, mouseYOnCanvas, snapDistanceR
       y: roundToNextHalf(mouseYOnCanvas),
       x1: rechteck.x1,
       y1: rechteck.y1,
+      isDragging: rechteck.isDragging,
     })
   }
   if (
@@ -386,6 +434,7 @@ function checkForRedDot (rechteck, mouseXOnCanvas, mouseYOnCanvas, snapDistanceR
       y: roundToNextHalf(rechteck.y1),
       x1: rechteck.x1,
       y1: rechteck.y1,
+      isDragging: rechteck.isDragging,
     })
   }
   if (
@@ -399,6 +448,7 @@ function checkForRedDot (rechteck, mouseXOnCanvas, mouseYOnCanvas, snapDistanceR
       y: roundToNextHalf(rechteck.y2),
       x1: rechteck.x1,
       y1: rechteck.y1,
+      isDragging: rechteck.isDragging,
     })
   }
 
@@ -406,9 +456,16 @@ function checkForRedDot (rechteck, mouseXOnCanvas, mouseYOnCanvas, snapDistanceR
 }
 
 function handleRechteckDistancesEdge (rechteckDistancesEdge, snapDistanceBlueDot) {
+  // if(dragRectangle.value.isDragging) return
+
   const minDistance = Math.min(...rechteckDistancesEdge.map((rechteck) => rechteck.distance))
   if (minDistance < snapDistanceBlueDot) {
     const closestRechteck = rechteckDistancesEdge.find((rechteck) => rechteck.distance === minDistance)
+    if (closestRechteck.isDragging) {
+      blueDot.value.x = null
+      blueDot.value.y = null
+      return
+    }
 
     blueDot.value.x = closestRechteck.x
     blueDot.value.y = closestRechteck.y
@@ -427,9 +484,17 @@ function handleRechteckDistancesEdge (rechteckDistancesEdge, snapDistanceBlueDot
 }
 
 function handleRechteckDistancesKanten (rechteckDistancesKanten, snapDistanceRedDot, mouseXOnCanvas, mouseYOnCanvas) {
+  // if(dragRectangle.value.isDragging) return
+
   const minDistance = Math.min(...rechteckDistancesKanten.map((rechteck) => rechteck.distance))
   if (minDistance < snapDistanceRedDot) {
     const closestRechteck = rechteckDistancesKanten.find((rechteck) => rechteck.distance === minDistance)
+
+    if (closestRechteck.isDragging) {
+      redDot.value.x = null
+      redDot.value.y = null
+      return
+    }
 
     redDot.value.x = closestRechteck.x
     redDot.value.y = closestRechteck.y
@@ -479,12 +544,79 @@ function addEventListenersForCanvas () {
     handleClickOnCanvas(event)
     openAddRechteckDialog()
   })
+  canvas.value.addEventListener('mousedown', handleMouseDownOnCanvas)
+  canvas.value.addEventListener('mouseup', handleMouseUpOnCanvas)
+  canvas.value.addEventListener('mousemove', handleMousemove)
+}
+
+const dragRectangle = ref({
+  x1: 0,
+  y1: 0,
+  x2: 0,
+  y2: 0,
+  isDragging: false,
+})
+
+function handleMouseDownOnCanvas (event) {
+  dragRectangle.value.isDragging = true
+
+  const rechteckeHasAlreadyDraggingElement = rechtecke.value.some((rechteck) => {
+    return (
+      rechteck.isDragging
+    )
+  })
+  if (rechteckeHasAlreadyDraggingElement) {
+    return
+  }
+
+  const mousePos = getMousePos(canvas.value, event)
+  const mouseXOnCanvas = blueDot.value.x || redDot.value.x || mousePos.x
+  const mouseYOnCanvas = blueDot.value.y || redDot.value.y || mousePos.y
+
+  dragRectangle.value.x1 = roundToNextHalf(mouseXOnCanvas)
+  dragRectangle.value.y1 = roundToNextHalf(mouseYOnCanvas)
+  dragRectangle.value.x2 = roundToNextHalf(mouseXOnCanvas)
+  dragRectangle.value.y2 = roundToNextHalf(mouseYOnCanvas)
+
+  rechtecke.value.push(dragRectangle.value)
+}
+
+function handleMouseUpOnCanvas () {
+  dragRectangle.value.isDragging = false
+
+  const copyOfDragRectangle = { ...dragRectangle.value }
+
+  rechtecke.value.pop()
+
+  rechtecke.value.push(copyOfDragRectangle)
+}
+
+function handleMousemove (event) {
+  if (dragRectangle.value.isDragging) {
+    const mousePos = getMousePos(canvas.value, event)
+    const mouseXOnCanvas = redDot.value.x && dragRectangle.value.x1 !== redDot.value.x ? redDot.value.x : mousePos.x
+    const mouseYOnCanvas = redDot.value.x && dragRectangle.value.y1 !== redDot.value.y ? redDot.value.y : mousePos.y
+
+        console.log('maxXOfRechtecke', maxXOfRechtecke.value, mouseXOnCanvas);
+
+    if(mouseXOnCanvas > maxXOfRechtecke.value) return
+    if(mouseYOnCanvas > maxYOfRechtecke.value) return
+
+    dragRectangle.value.x2 = roundToNextHalf(mouseXOnCanvas)
+    dragRectangle.value.y2 = roundToNextHalf(mouseYOnCanvas)
+
+    drawCanvas()
+
+    ctx.value.fillStyle = 'black'
+    ctx.value.font = '16px Arial'
+    ctx.value.fillText(`breite: ${Math.abs(dragRectangle.value.x2 - dragRectangle.value.x1).toFixed(2)}, hoehe: ${Math.abs(dragRectangle.value.y2 - dragRectangle.value.y1).toFixed(2)}`, dragRectangle.value.x2, dragRectangle.value.y2)
+  }
 }
 
 function handleClickOnCanvas (event) {
   if (
-    redDot.value.x !== null && redDot.value.y !== null
-    && blueDot.value.x !== null && blueDot.value.y !== null
+    redDot.value.x === null && redDot.value.y === null
+    && blueDot.value.x === null && blueDot.value.y === null
   ) {
     return
   }
@@ -521,9 +653,14 @@ function drawRedDot () {
   ctx.value.beginPath()
   ctx.value.arc(redDot.value.x, redDot.value.y, 4, 1, 2 * Math.PI)
   ctx.value.fill()
+
+  clickPosition.value.x = blueDot.value.x
+  clickPosition.value.y = blueDot.value.y
 }
 function drawBlueDot () {
-  if (blueDot.value.x === null || blueDot.value.y === null) {
+  if (
+    blueDot.value.x === null || blueDot.value.y === null
+  ) {
     return
   }
 
@@ -531,6 +668,9 @@ function drawBlueDot () {
   ctx.value.beginPath()
   ctx.value.arc(blueDot.value.x, blueDot.value.y, 4, 1, 2 * Math.PI)
   ctx.value.fill()
+
+  clickPosition.value.x = blueDot.value.x
+  clickPosition.value.y = blueDot.value.y
 }
 
 const tooltipRechteck = ref({
@@ -540,7 +680,10 @@ const tooltipRechteck = ref({
 })
 
 function drawToolTipWithDistanceToX1AndY1 () {
-  if (tooltipRechteck.value.rechteck === null) {
+  if (
+    tooltipRechteck.value.rechteck === null
+    || dragRectangle.value.isDragging
+  ) {
     return
   }
 
@@ -555,6 +698,22 @@ function drawToolTipWithDistanceToX1AndY1 () {
   ctx.value.fillStyle = 'black'
   ctx.value.font = '16px Arial'
   ctx.value.fillText(`x1: ${distanceToX1}, y1: ${distanceToY1}`, x, y)
+}
+
+function getBreite(rechteck) {
+  return Math.abs(rechteck.x2 - rechteck.x1)
+}
+
+function handleUpdateBreite (rechteck, breite) {
+  rechteck.x2 = parseFloat(rechteck.x1) + parseFloat(breite)
+}
+
+function getHoehe(rechteck) {
+  return Math.abs(rechteck.y2 - rechteck.y1)
+}
+
+function handleUpdateHoehe (rechteck, hoehe) {
+  rechteck.y2 = parseFloat(rechteck.y1) + parseFloat(hoehe)
 }
 
 </script>

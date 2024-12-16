@@ -6,7 +6,7 @@
   >
     <div class="bg-white rounded-lg shadow-md p-4 w-1/2">
       <h2 class="text-lg font-bold mb-4">Rechteck hinzufügen</h2>
-      <form @submit.prevent="saveRechteck">
+      <form @submit.prevent="() => {}">
         <label class="block text-lg font-medium mb-2">
           Höhe
           <input
@@ -46,6 +46,7 @@
         <button
           type="submit"
           class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg mt-4"
+          @click="saveRechteck"
         >Speichern</button>
         <button
           @click="close"
@@ -105,6 +106,12 @@ function saveRechteck () {
     x2: posX.value + breite.value,
     y2: posY.value + hoehe.value,
   }
+
+  breite.value = 0
+  hoehe.value = 0
+
+  posX.value = 0
+  posY.value = 0
 
   emit('save', rechteck.value)
 }

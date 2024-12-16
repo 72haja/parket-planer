@@ -25,7 +25,9 @@
 
       <p class="text-lg font-medium mt-8">Raum</p>
 
-      <div class="grid grid-cols-[minmax(0,1fr)_max-content] grid-rows-[minmax(0,1fr)_max-content] items-center justify-items-center gap-2">
+      <div
+        class="grid grid-cols-[minmax(0,1fr)_max-content] grid-rows-[minmax(0,1fr)_max-content] items-center justify-items-center gap-2"
+      >
         <div
           class="w-full aspect-square max-h-[calc(100dvh-40px)] bg-gray-200 rounded-lg shadow-md mt-4 p-4"
         >
@@ -38,13 +40,15 @@
           ></canvas>
         </div>
 
-        <AddButton class="w-max h-max" @click="() => canvasWidthIncrease += 50" />
-        <AddButton class="w-max h-max" @click="() => canvasWidthIncrease += 50" />
+        <AddButton
+          class="w-max h-max"
+          @click="() => canvasWidthIncrease += 50"
+        />
+        <AddButton
+          class="w-max h-max"
+          @click="() => canvasWidthIncrease += 50"
+        />
       </div>
-
-      <p>widthOfCanvas {{widthOfCanvas}}</p>
-      <p>maxXOfRechtecke {{maxXOfRechtecke}}</p>
-      <p>maxYOfRechtecke {{maxYOfRechtecke}}</p>
 
       <button
         @click="openAddRechteckDialog"
@@ -61,9 +65,7 @@
           :key="index"
         >
           <span> Rechteck {{ index }}</span>
-          <label
-            class="block text-lg font-medium"
-          >
+          <label class="block text-lg font-medium">
             Breite:
             <input
               type="number"
@@ -76,9 +78,7 @@
               }"
             />
           </label>
-          <label
-            class="block text-lg font-medium"
-          >
+          <label class="block text-lg font-medium">
             Höhe:
             <input
               type="number"
@@ -285,15 +285,19 @@ function drawVinylPlatten () {
 }
 
 const maxXOfRechtecke = computed(() => {
-  return Math.max(...rechtecke.value.map(
-    (rechteck) => [ rechteck.x1, rechteck.x2 ]
-  ).flat()) + canvasWidthIncrease.value
+  return Math.max(...rechtecke.value
+    .filter((rechteck) => !rechteck.isDragging)
+    .map(
+      (rechteck) => [ rechteck.x1, rechteck.x2 ]
+    ).flat()) + canvasWidthIncrease.value
 })
 
 const maxYOfRechtecke = computed(() => {
-  return Math.max(...rechtecke.value.map(
-    (rechteck) => [ rechteck.y1, rechteck.y2 ]
-  ).flat()) + canvasWidthIncrease.value
+  return Math.max(...rechtecke.value
+    .filter((rechteck) => !rechteck.isDragging)
+    .map(
+      (rechteck) => [ rechteck.y1, rechteck.y2 ]
+    ).flat()) + canvasWidthIncrease.value
 })
 
 const canvasWidthIncrease = ref(0)
@@ -313,7 +317,6 @@ function closeAddRechteckDialog () {
 }
 
 function addRechteck (rechteck) {
-  console.log('addRechteck');
   // Rechteck-Objekt speichern
   rechtecke.value.push(rechteck)
   closeAddRechteckDialog()
@@ -589,6 +592,8 @@ function handleMouseUpOnCanvas () {
   rechtecke.value.pop()
 
   rechtecke.value.push(copyOfDragRectangle)
+
+  canvasWidthIncrease.value = 0
 }
 
 function handleMousemove (event) {
@@ -597,10 +602,8 @@ function handleMousemove (event) {
     const mouseXOnCanvas = redDot.value.x && dragRectangle.value.x1 !== redDot.value.x ? redDot.value.x : mousePos.x
     const mouseYOnCanvas = redDot.value.x && dragRectangle.value.y1 !== redDot.value.y ? redDot.value.y : mousePos.y
 
-        console.log('maxXOfRechtecke', maxXOfRechtecke.value, mouseXOnCanvas);
-
-    if(mouseXOnCanvas > maxXOfRechtecke.value) return
-    if(mouseYOnCanvas > maxYOfRechtecke.value) return
+    if (mouseXOnCanvas > widthOfCanvas.value) return
+    if (mouseYOnCanvas > widthOfCanvas.value) return
 
     dragRectangle.value.x2 = roundToNextHalf(mouseXOnCanvas)
     dragRectangle.value.y2 = roundToNextHalf(mouseYOnCanvas)
@@ -700,7 +703,7 @@ function drawToolTipWithDistanceToX1AndY1 () {
   ctx.value.fillText(`x1: ${distanceToX1}, y1: ${distanceToY1}`, x, y)
 }
 
-function getBreite(rechteck) {
+function getBreite (rechteck) {
   return Math.abs(rechteck.x2 - rechteck.x1)
 }
 
@@ -708,7 +711,7 @@ function handleUpdateBreite (rechteck, breite) {
   rechteck.x2 = parseFloat(rechteck.x1) + parseFloat(breite)
 }
 
-function getHoehe(rechteck) {
+function getHoehe (rechteck) {
   return Math.abs(rechteck.y2 - rechteck.y1)
 }
 

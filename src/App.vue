@@ -317,6 +317,12 @@ function closeAddRechteckDialog () {
 }
 
 function addRechteck (rechteck) {
+  console.log('🚀 ~ addRechteck ~ rechteck:', rechteck);
+  if(rechteck.x1 - rechteck.x2 === 0 || rechteck.y1 - rechteck.y2 === 0) {
+    snackbarText.value = 'Breite und Höhe müssen größer als 0 sein'
+    return
+  }
+
   // Rechteck-Objekt speichern
   rechtecke.value.push(rechteck)
   closeAddRechteckDialog()
@@ -581,6 +587,7 @@ function handleMouseDownOnCanvas (event) {
   dragRectangle.value.x2 = roundToNextHalf(mouseXOnCanvas)
   dragRectangle.value.y2 = roundToNextHalf(mouseYOnCanvas)
 
+
   rechtecke.value.push(dragRectangle.value)
 }
 
@@ -590,6 +597,10 @@ function handleMouseUpOnCanvas () {
   const copyOfDragRectangle = { ...dragRectangle.value }
 
   rechtecke.value.pop()
+
+  if(copyOfDragRectangle.x1 - copyOfDragRectangle.x2 === 0 || copyOfDragRectangle.y1 - copyOfDragRectangle.y2 === 0) {
+    return
+  }
 
   rechtecke.value.push(copyOfDragRectangle)
 

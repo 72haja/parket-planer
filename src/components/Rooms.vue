@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import CloseButton from './CloseButton.vue';
+import { onMounted } from 'vue';
 
 const abstandX = 20;
 const abstandY = 20;
@@ -59,6 +60,9 @@ const rooms = [
 
 const showMenu = ref(false)
 
+const handleRoomSelect = (room) => {
+  selectedRoom.value = room;
+}
 
 </script>
 
@@ -71,11 +75,11 @@ const showMenu = ref(false)
 
     <div class="relative">
       <div
-        class="absolute left-0 top-0 w-max h-max grid place-content-center z-10"
+        class="absolute left-0 top-0 w-max h-max z-10"
         v-if="showMenu"
       >
         <CloseButton
-          class="absolute -top-4 -right-4 p-2 rounded-full  text-white"
+          class="absolute -top-6 -right-6 p-2 rounded-full text-white"
           @click="showMenu = false"
           color="bg-red-500"
         />
@@ -86,7 +90,10 @@ const showMenu = ref(false)
             class="w-full grid grid-cols-[minmax(0,1fr)_max-content] gap-2 items-center"
           >
             <span>{{ room.name }}</span>
-            <button @click="selectedRoom = room.data">Auswählen</button>
+            <button
+              @click="handleRoomSelect(room.data)"
+              class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg"
+            >Auswählen</button>
           </div>
         </div>
       </div>

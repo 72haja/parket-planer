@@ -3,8 +3,8 @@
     <div class="max-w-screen-2xl mx-auto p-4 md:p-6 lg:p-8 bg-white rounded-lg shadow-md">
 
       <Rooms
-        v-model:selectedRoom="rechtecke"
-        @update:selectedRoom="drawCanvas()"
+        :selectedRoom="rechtecke"
+        @update:selectedRoom="handleRoomSelect"
       />
 
       <h1 class="text-3xl font-bold mb-4">Vinyl-Platten-Rechner</h1>
@@ -145,6 +145,7 @@ import CloseButton from './components/CloseButton.vue';
 import Snackbar from './components/Snackbar.vue';
 import AddButton from './components/AddButton.vue';
 import Rooms from './components/Rooms.vue';
+import { nextTick } from 'vue';
 
 const snackbarText = ref('')
 
@@ -163,68 +164,8 @@ const canvas = ref(null)
 const ctx = ref(null)
 const canvasPlatten = ref(null)
 const ctxPlatten = ref(null)
-// const rechtecke = ref([
-//   { x1: 0, y1: 0, x2: 482, y2: 327 },
-//   { x1: 482 - 327, y1: 327, x2: 482, y2: 572 },
-// ])
 
-const abstandX = 20;
-const abstandY = 20;
-const tuerbreite1 = 85;
-const tuerbreite2 = 72;
-const tuertiefe = 16.5;
-const fensterTiefe = 12;
-const fensterBreite = 117.5;
-
-// Abstellkammer
-// const raumBreite = 149.5;
-// const raumHoehe = 328;
-// { x1: abstandX, y1: abstandY, x2: abstandX+raumBreite, y2: abstandY+raumHoehe },
-
-// Flur
-// const raumBreite = 297.5;
-// const raumHoehe = 99;
-// { x1: abstandX, y1: abstandY, x2: raumBreite+abstandX, y2: raumHoehe+abstandY },
-// { x1: 97.5+abstandX, y1: raumHoehe+abstandY, x2: 97.5+abstandX+102, y2: 123+abstandY },
-// { x1: abstandX-tuertiefe, y1: abstandY+5, x2: abstandX, y2: abstandY+5+tuerbreite1 },
-// { x1: abstandX+5, y1: abstandY-tuertiefe, x2: abstandX+5+tuerbreite2, y2: abstandY },
-// { x1: raumBreite+abstandX-2-tuerbreite2, y1: abstandY-tuertiefe, x2: raumBreite+abstandX-2, y2: abstandY },
-// { x1: raumBreite+abstandX, y1: abstandY+5, x2: raumBreite+abstandX+tuertiefe, y2: abstandX+5+tuerbreite1 },
-
-// Kinderzimmer
-const schlauchBreite = 98.5;
-const durchgangBreite = 13.5;
-const raumBreite = schlauchBreite + durchgangBreite + 337;
-const raumHoehe = 596;
-const abstandFenster = 128;
-const abstandZwischenFenster = 88.5;
-// { x1: abstandX, y1: abstandY, x2: abstandX+schlauchBreite, y2: abstandY+340 },
-// { x1: abstandX+schlauchBreite, y1: abstandY+35, x2: abstandX+schlauchBreite+durchgangBreite, y2: abstandY+35+220 },
-// { x1: abstandX+schlauchBreite+durchgangBreite, y1: abstandY, x2: abstandX+raumBreite, y2: abstandY+raumHoehe },
-// { x1: abstandX+raumBreite, y1: abstandY+abstandFenster, x2: abstandX+raumBreite+fensterTiefe, y2: abstandY+abstandFenster+fensterBreite },
-// { x1: abstandX+raumBreite, y1: abstandY+abstandFenster+fensterBreite+abstandZwischenFenster, x2: abstandX+raumBreite+fensterTiefe, y2: abstandY+abstandFenster+fensterBreite+abstandZwischenFenster+fensterBreite },
-// { x1: abstandX+schlauchBreite + durchgangBreite, y1: abstandY+raumHoehe-47.5, x2: abstandX+schlauchBreite + durchgangBreite+47.5, y2: abstandY+raumHoehe },
-
-
-// Schlafzimmer
-// const raumHoehe = 576.5;
-// const raumBreite = 318;
-// { x1: abstandX, y1: abstandY, x2: abstandX+raumBreite, y2: abstandY+raumHoehe },
-
-const rechtecke = ref([
-  // { x1: abstandX, y1: abstandY, x2: abstandX + schlauchBreite, y2: abstandY + 340 },
-  // { x1: abstandX + schlauchBreite, y1: abstandY + 35, x2: abstandX + schlauchBreite + durchgangBreite, y2: abstandY + 35 + 220 },
-  // { x1: abstandX + schlauchBreite + durchgangBreite, y1: abstandY, x2: abstandX + raumBreite, y2: abstandY + raumHoehe },
-  // { x1: abstandX + raumBreite, y1: abstandY + abstandFenster, x2: abstandX + raumBreite + fensterTiefe, y2: abstandY + abstandFenster + fensterBreite },
-  // { x1: abstandX + raumBreite, y1: abstandY + abstandFenster + fensterBreite + abstandZwischenFenster, x2: abstandX + raumBreite + fensterTiefe, y2: abstandY + abstandFenster + fensterBreite + abstandZwischenFenster + fensterBreite },
-  // { x1: abstandX + schlauchBreite + durchgangBreite, y1: abstandY + raumHoehe - 47.5, x2: abstandX + schlauchBreite + durchgangBreite + 47.5, y2: abstandY + raumHoehe },
-
-  // Diele Klein
-  // { x1: abstandX, y1: raumHoehe + 50, x2: abstandX + dieleKleinBreite, y2: raumHoehe + 50 + dieleKleinHoehe },
-
-  // // Diele Groß
-  // { x1: abstandX, y1: raumHoehe + 50 + dieleKleinHoehe + 50, x2: abstandX + dieleGrossBreite, y2: raumHoehe + 50 + dieleKleinHoehe + 50 + dieleGrossHoehe },
-])
+const rechtecke = ref([])
 
 onMounted(() => {
   ctx.value = canvas.value.getContext('2d')
@@ -238,6 +179,13 @@ onMounted(() => {
 function drawCanvas () {
   drawRaumCanvas()
   drawPlattenCanvas()
+}
+
+function handleRoomSelect (rooms) {
+  rechtecke.value = rooms
+  nextTick(() => {
+    drawCanvas()
+  })
 }
 
 function drawRaumCanvas () {
@@ -271,6 +219,9 @@ function drawPlattenCanvas () {
   ctxPlatten.value.clearRect(0, 0, canvasPlatten.value.width, canvasPlatten.value.height)
   drawVinylPlatten()
 }
+
+const abstandX = 20;
+const abstandY = 20;
 
 function drawVinylPlatten () {
   const amountOfPlattenX = Math.floor(widthOfCanvas.value / plattenLaenge.value)
@@ -521,6 +472,8 @@ function handleRechteckDistancesKanten (rechteckDistancesKanten, snapDistanceRed
 }
 
 function handleNormalMouseMove (event) {
+  event.stopPropagation()
+
   const mousePos = getMousePos(canvas.value, event)
   const mouseXOnCanvas = mousePos.x
   const mouseYOnCanvas = mousePos.y
@@ -548,7 +501,6 @@ function handleNormalMouseMove (event) {
 
 function addEventListenersForCanvas () {
   canvas.value.addEventListener('mousemove', handleNormalMouseMove)
-  canvas.value.addEventListener('touchmove', handleNormalMouseMove)
 
   canvas.value.addEventListener('click', handleClickOnCanvas)
   canvas.value.addEventListener('dblclick', (event) => {
@@ -556,13 +508,8 @@ function addEventListenersForCanvas () {
     openAddRechteckDialog()
   })
   canvas.value.addEventListener('mousedown', handleMouseDownOnCanvas)
-  canvas.value.addEventListener('touchstart', handleMouseDownOnCanvas)
-
   canvas.value.addEventListener('mouseup', handleMouseUpOnCanvas)
-  canvas.value.addEventListener('touchend', handleMouseUpOnCanvas)
-
   canvas.value.addEventListener('mousemove', handleMousemove)
-  canvas.value.addEventListener('touchmove', handleMousemove)
 }
 
 const dragRectangle = ref({
@@ -615,6 +562,8 @@ function handleMouseUpOnCanvas () {
 }
 
 function handleMousemove (event) {
+  event.stopPropagation()
+
   if (dragRectangle.value.isDragging) {
     const mousePos = getMousePos(canvas.value, event)
     const mouseXOnCanvas = redDot.value.x && dragRectangle.value.x1 !== redDot.value.x ? redDot.value.x : mousePos.x
@@ -635,6 +584,7 @@ function handleMousemove (event) {
 }
 
 function handleClickOnCanvas (event) {
+  event.stopPropagation()
   if (
     redDot.value.x === null && redDot.value.y === null
     && blueDot.value.x === null && blueDot.value.y === null

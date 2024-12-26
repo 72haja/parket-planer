@@ -2,7 +2,10 @@
   <div class="p-10">
     <div class="max-w-screen-2xl mx-auto p-4 md:p-6 lg:p-8 bg-white rounded-lg shadow-md">
 
-      <Rooms v-model:selectedRoom="rechtecke" />
+      <Rooms
+        v-model:selectedRoom="rechtecke"
+        @update:selectedRoom="drawCanvas()"
+      />
 
       <h1 class="text-3xl font-bold mb-4">Vinyl-Platten-Rechner</h1>
       <form class="flex flex-col">
@@ -254,7 +257,6 @@ function drawRechtecke () {
     ctx.value.strokeStyle = rechtEckIsTheOneWithTheMouse ? 'red' : 'black';
     ctx.value.beginPath()
     ctx.value.rect(rechteck.x1, rechteck.y1, rechteck.x2 - rechteck.x1, rechteck.y2 - rechteck.y1)
-    // Stroke width of 2 and red color
     ctx.value.stroke()
   })
 }
@@ -271,8 +273,6 @@ function drawPlattenCanvas () {
 }
 
 function drawVinylPlatten () {
-  const abstand = 50
-
   const amountOfPlattenX = Math.floor(widthOfCanvas.value / plattenLaenge.value)
   const amountOfPlattenY = Math.floor(widthOfCanvas.value / plattenBreite.value)
 
@@ -321,7 +321,6 @@ function closeAddRechteckDialog () {
 }
 
 function addRechteck (rechteck) {
-  console.log('🚀 ~ addRechteck ~ rechteck:', rechteck);
   if (rechteck.x1 - rechteck.x2 === 0 || rechteck.y1 - rechteck.y2 === 0) {
     snackbarText.value = 'Breite und Höhe müssen größer als 0 sein'
     return
@@ -469,8 +468,6 @@ function checkForRedDot (rechteck, mouseXOnCanvas, mouseYOnCanvas, snapDistanceR
 }
 
 function handleRechteckDistancesEdge (rechteckDistancesEdge, snapDistanceBlueDot) {
-  // if(dragRectangle.value.isDragging) return
-
   const minDistance = Math.min(...rechteckDistancesEdge.map((rechteck) => rechteck.distance))
   if (minDistance < snapDistanceBlueDot) {
     const closestRechteck = rechteckDistancesEdge.find((rechteck) => rechteck.distance === minDistance)
@@ -497,8 +494,6 @@ function handleRechteckDistancesEdge (rechteckDistancesEdge, snapDistanceBlueDot
 }
 
 function handleRechteckDistancesKanten (rechteckDistancesKanten, snapDistanceRedDot, mouseXOnCanvas, mouseYOnCanvas) {
-  // if(dragRectangle.value.isDragging) return
-
   const minDistance = Math.min(...rechteckDistancesKanten.map((rechteck) => rechteck.distance))
   if (minDistance < snapDistanceRedDot) {
     const closestRechteck = rechteckDistancesKanten.find((rechteck) => rechteck.distance === minDistance)
@@ -525,32 +520,35 @@ function handleRechteckDistancesKanten (rechteckDistancesKanten, snapDistanceRed
   }
 }
 
-function addEventListenersForCanvas () {
-  canvas.value.addEventListener('mousemove', (event) => {
-    const mousePos = getMousePos(canvas.value, event)
-    const mouseXOnCanvas = mousePos.x
-    const mouseYOnCanvas = mousePos.y
+function handleNormalMouseMove (event) {
+  const mousePos = getMousePos(canvas.value, event)
+  const mouseXOnCanvas = mousePos.x
+  const mouseYOnCanvas = mousePos.y
 
-    const snapDistanceRedDot = 20
-    const snapDistanceBlueDot = 5
+  const snapDistanceRedDot = 20
+  const snapDistanceBlueDot = 5
 
-    const rechteckDistancesKanten = []
-    const rechteckDistancesEdge = []
+  const rechteckDistancesKanten = []
+  const rechteckDistancesEdge = []
 
-    rechtecke.value.forEach((rechteck, index) => {
-      const rechteckDistancesEdgeOfRechteck = checkForBlueDot(rechteck, mouseXOnCanvas, mouseYOnCanvas, snapDistanceBlueDot)
-      rechteckDistancesEdge.push(...rechteckDistancesEdgeOfRechteck)
+  rechtecke.value.forEach((rechteck, index) => {
+    const rechteckDistancesEdgeOfRechteck = checkForBlueDot(rechteck, mouseXOnCanvas, mouseYOnCanvas, snapDistanceBlueDot)
+    rechteckDistancesEdge.push(...rechteckDistancesEdgeOfRechteck)
 
-      const rechteckDistancesKantenOfRechteck = checkForRedDot(rechteck, mouseXOnCanvas, mouseYOnCanvas, snapDistanceRedDot)
-      rechteckDistancesKanten.push(...rechteckDistancesKantenOfRechteck)
-    })
-
-    handleRechteckDistancesEdge(rechteckDistancesEdge, snapDistanceBlueDot)
-
-    handleRechteckDistancesKanten(rechteckDistancesKanten, snapDistanceRedDot, mouseXOnCanvas, mouseYOnCanvas)
-
-    drawCanvas()
+    const rechteckDistancesKantenOfRechteck = checkForRedDot(rechteck, mouseXOnCanvas, mouseYOnCanvas, snapDistanceRedDot)
+    rechteckDistancesKanten.push(...rechteckDistancesKantenOfRechteck)
   })
+
+  handleRechteckDistancesEdge(rechteckDistancesEdge, snapDistanceBlueDot)
+
+  handleRechteckDistancesKanten(rechteckDistancesKanten, snapDistanceRedDot, mouseXOnCanvas, mouseYOnCanvas)
+
+  drawCanvas()
+}
+
+function addEventListenersForCanvas () {
+  canvas.value.addEventListener('mousemove', handleNormalMouseMove)
+  canvas.value.addEventListener('touchmove', handleNormalMouseMove)
 
   canvas.value.addEventListener('click', handleClickOnCanvas)
   canvas.value.addEventListener('dblclick', (event) => {
@@ -558,8 +556,13 @@ function addEventListenersForCanvas () {
     openAddRechteckDialog()
   })
   canvas.value.addEventListener('mousedown', handleMouseDownOnCanvas)
+  canvas.value.addEventListener('touchstart', handleMouseDownOnCanvas)
+
   canvas.value.addEventListener('mouseup', handleMouseUpOnCanvas)
+  canvas.value.addEventListener('touchend', handleMouseUpOnCanvas)
+
   canvas.value.addEventListener('mousemove', handleMousemove)
+  canvas.value.addEventListener('touchmove', handleMousemove)
 }
 
 const dragRectangle = ref({

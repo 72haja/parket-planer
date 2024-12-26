@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from 'vue'
+import CloseButton from './CloseButton.vue';
 
 const abstandX = 20;
 const abstandY = 20;
@@ -69,12 +70,16 @@ const showMenu = ref(false)
     >Räume</button>
 
     <div class="relative">
-      <div class="absolute left-0 top-0 w-max h-max grid place-content-center z-10" v-if="showMenu">
-        <button
-          class="absolute top-0 right-0 p-2"
+      <div
+        class="absolute left-0 top-0 w-max h-max grid place-content-center z-10"
+        v-if="showMenu"
+      >
+        <CloseButton
+          class="absolute -top-4 -right-4 p-2 rounded-full  text-white"
           @click="showMenu = false"
-        >X</button>
-        <div class="w-max p-4 grid gap-1 shadow-lg rounded-lg bg-white">
+          color="bg-red-500"
+        />
+        <div class="w-max p-4 grid gap-1 shadow-2xl rounded-lg bg-white">
           <div
             v-for="(room, index) in rooms"
             :key="index"

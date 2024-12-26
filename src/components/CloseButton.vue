@@ -1,12 +1,20 @@
 <script setup>
 
+const props = defineProps({
+  color: {
+    type: String,
+    default: 'bg-gray-400'
+  }
+})
+
 const emits = defineEmits(['click'])
 </script>
 
 <template>
   <button
     @click="emits('click')"
-    class="rounded-full bg-gray-400 hover:bg-gray-500 p-1"
+    class="rounded-full hover:bg-gray-500 p-1"
+    :class="[props.color]"
   >
     <svg
       width="25"

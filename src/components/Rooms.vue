@@ -70,6 +70,10 @@ const showMenu = ref(false)
 
     <div class="relative">
       <div class="absolute left-0 top-0 w-full h-full grid place-content-center z-10" v-if="showMenu">
+        <button
+          class="absolute top-0 right-0 p-2"
+          @click="showMenu = false"
+        >X</button>
         <div class="w-max p-4 grid gap-1 shadow-lg rounded-lg bg-white">
           <div
             v-for="(room, index) in rooms"

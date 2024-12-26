@@ -1,6 +1,9 @@
 <template>
   <div class="p-10">
     <div class="max-w-screen-2xl mx-auto p-4 md:p-6 lg:p-8 bg-white rounded-lg shadow-md">
+
+      <Rooms v-model:selectedRoom="rechtecke" />
+
       <h1 class="text-3xl font-bold mb-4">Vinyl-Platten-Rechner</h1>
       <form class="flex flex-col">
         <div class="w-full grid gap-2">
@@ -36,7 +39,7 @@
             ref="canvas"
             :width="widthOfCanvas"
             :height="widthOfCanvas"
-            class="w-full h-full bg-gray-200"
+            class="w-full h-full bg-gray-200 aspect-square"
           ></canvas>
         </div>
 
@@ -138,6 +141,7 @@ import AddRechteckDialog from './components/AddRechteckDialog.vue'
 import CloseButton from './components/CloseButton.vue';
 import Snackbar from './components/Snackbar.vue';
 import AddButton from './components/AddButton.vue';
+import Rooms from './components/Rooms.vue';
 
 const snackbarText = ref('')
 
@@ -205,12 +209,12 @@ const abstandZwischenFenster = 88.5;
 // { x1: abstandX, y1: abstandY, x2: abstandX+raumBreite, y2: abstandY+raumHoehe },
 
 const rechtecke = ref([
-  { x1: abstandX, y1: abstandY, x2: abstandX + schlauchBreite, y2: abstandY + 340 },
-  { x1: abstandX + schlauchBreite, y1: abstandY + 35, x2: abstandX + schlauchBreite + durchgangBreite, y2: abstandY + 35 + 220 },
-  { x1: abstandX + schlauchBreite + durchgangBreite, y1: abstandY, x2: abstandX + raumBreite, y2: abstandY + raumHoehe },
-  { x1: abstandX + raumBreite, y1: abstandY + abstandFenster, x2: abstandX + raumBreite + fensterTiefe, y2: abstandY + abstandFenster + fensterBreite },
-  { x1: abstandX + raumBreite, y1: abstandY + abstandFenster + fensterBreite + abstandZwischenFenster, x2: abstandX + raumBreite + fensterTiefe, y2: abstandY + abstandFenster + fensterBreite + abstandZwischenFenster + fensterBreite },
-  { x1: abstandX + schlauchBreite + durchgangBreite, y1: abstandY + raumHoehe - 47.5, x2: abstandX + schlauchBreite + durchgangBreite + 47.5, y2: abstandY + raumHoehe },
+  // { x1: abstandX, y1: abstandY, x2: abstandX + schlauchBreite, y2: abstandY + 340 },
+  // { x1: abstandX + schlauchBreite, y1: abstandY + 35, x2: abstandX + schlauchBreite + durchgangBreite, y2: abstandY + 35 + 220 },
+  // { x1: abstandX + schlauchBreite + durchgangBreite, y1: abstandY, x2: abstandX + raumBreite, y2: abstandY + raumHoehe },
+  // { x1: abstandX + raumBreite, y1: abstandY + abstandFenster, x2: abstandX + raumBreite + fensterTiefe, y2: abstandY + abstandFenster + fensterBreite },
+  // { x1: abstandX + raumBreite, y1: abstandY + abstandFenster + fensterBreite + abstandZwischenFenster, x2: abstandX + raumBreite + fensterTiefe, y2: abstandY + abstandFenster + fensterBreite + abstandZwischenFenster + fensterBreite },
+  // { x1: abstandX + schlauchBreite + durchgangBreite, y1: abstandY + raumHoehe - 47.5, x2: abstandX + schlauchBreite + durchgangBreite + 47.5, y2: abstandY + raumHoehe },
 
   // Diele Klein
   // { x1: abstandX, y1: raumHoehe + 50, x2: abstandX + dieleKleinBreite, y2: raumHoehe + 50 + dieleKleinHoehe },
@@ -318,7 +322,7 @@ function closeAddRechteckDialog () {
 
 function addRechteck (rechteck) {
   console.log('🚀 ~ addRechteck ~ rechteck:', rechteck);
-  if(rechteck.x1 - rechteck.x2 === 0 || rechteck.y1 - rechteck.y2 === 0) {
+  if (rechteck.x1 - rechteck.x2 === 0 || rechteck.y1 - rechteck.y2 === 0) {
     snackbarText.value = 'Breite und Höhe müssen größer als 0 sein'
     return
   }
@@ -598,7 +602,7 @@ function handleMouseUpOnCanvas () {
 
   rechtecke.value.pop()
 
-  if(copyOfDragRectangle.x1 - copyOfDragRectangle.x2 === 0 || copyOfDragRectangle.y1 - copyOfDragRectangle.y2 === 0) {
+  if (copyOfDragRectangle.x1 - copyOfDragRectangle.x2 === 0 || copyOfDragRectangle.y1 - copyOfDragRectangle.y2 === 0) {
     return
   }
 

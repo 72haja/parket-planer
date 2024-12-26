@@ -69,7 +69,7 @@ const showMenu = ref(false)
     >Räume</button>
 
     <div class="relative">
-      <div class="absolute left-0 top-0 w-full h-full grid place-content-center z-10" v-if="showMenu">
+      <div class="absolute left-0 top-0 w-max h-max grid place-content-center z-10" v-if="showMenu">
         <button
           class="absolute top-0 right-0 p-2"
           @click="showMenu = false"

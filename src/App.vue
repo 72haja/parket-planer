@@ -35,7 +35,7 @@
         class="grid grid-cols-[minmax(0,1fr)_max-content] grid-rows-[minmax(0,1fr)_max-content] items-center justify-items-center gap-2"
       >
         <div
-          class="w-full aspect-square max-h-[calc(100dvh-40px)] bg-gray-200 rounded-lg shadow-md mt-4 p-4"
+          class="max-w-full w-auto aspect-square max-h-[calc(100dvh-40px)] bg-gray-200 rounded-lg shadow-md mt-4 p-4"
         >
           <canvas
             id="raum"
@@ -114,7 +114,7 @@
       </label>
 
       <div
-        class="w-full aspect-square max-h-[calc(100dvh-40px)] bg-gray-200 rounded-lg shadow-md mt-4 p-4"
+        class="max-w-full w-auto aspect-square max-h-[calc(100dvh-40px)] bg-gray-200 rounded-lg shadow-md mt-4 p-4"
       >
         <canvas
           id="platten"
@@ -149,11 +149,11 @@ import { nextTick } from 'vue';
 
 const snackbarText = ref('')
 
-// const plattenLaenge = ref(63.6)
-// const plattenBreite = ref(31.9)
+const plattenLaenge = ref(63.6)
+const plattenBreite = ref(31.9)
 
-const plattenBreite = ref(23.8)
-const plattenLaenge = ref(152)
+// const plattenBreite = ref(23.8)
+// const plattenLaenge = ref(152)
 
 const clickPosition = ref({
   x: 0,

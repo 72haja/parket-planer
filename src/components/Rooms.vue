@@ -51,11 +51,34 @@ const schlafzimmerHoehe = 576.5;
 const schlafzimmerBreite = 318;
 const schlafzimmer = [ { x1: abstandX, y1: abstandY, x2: abstandX + schlafzimmerBreite, y2: abstandY + schlafzimmerHoehe }, ]
 
+// Dachboden
+const dachbodenBreite = 576.5;
+const dachbodenHoehe = 634;
+const einrueckungX1 = 64;
+const einrueckungX2 = 82.5;
+const einrueckungX3 = 64.5;
+const einrueckungY1 = 112.5;
+const einrueckungY2 = 55;
+const einrueckungY3 = 181.5;
+const einrueckungY4 = 28;
+
+const dachboden = [
+  { x1: abstandX, y1: abstandY, x2: abstandX + dachbodenBreite - (einrueckungX1+einrueckungX2+einrueckungX3), y2: abstandY + dachbodenHoehe},
+  { x1: abstandX + dachbodenBreite - (einrueckungX1+einrueckungX2+einrueckungX3), y1: abstandY, x2: abstandX + dachbodenBreite, y2: abstandY + einrueckungY1},
+  { x1: abstandX + dachbodenBreite - (einrueckungX1+einrueckungX2+einrueckungX3), y1: abstandY+einrueckungY1, x2: abstandX + dachbodenBreite - (einrueckungX3), y2: abstandY + einrueckungY1 + einrueckungY2},
+  { x1: abstandX + dachbodenBreite - (einrueckungX1+einrueckungX2+einrueckungX3), y1: abstandY+einrueckungY1+einrueckungY2, x2: abstandX + dachbodenBreite - (einrueckungX2+einrueckungX3), y2: abstandY + einrueckungY1 + einrueckungY2 + einrueckungY3},
+  { x1: abstandX + dachbodenBreite - (einrueckungX1+einrueckungX2+einrueckungX3), y1: abstandY+einrueckungY1+einrueckungY2+einrueckungY3+134, x2: abstandX + dachbodenBreite, y2: abstandY + dachbodenHoehe},
+  { x1: abstandX + dachbodenBreite - (einrueckungX1+einrueckungX2+einrueckungX3), y1: abstandY+einrueckungY1+einrueckungY2+einrueckungY3+einrueckungY4, x2: abstandX + dachbodenBreite - (einrueckungX1+einrueckungX2+einrueckungX3) + 11, y2: abstandY + einrueckungY1 + einrueckungY2 + einrueckungY3 + einrueckungY4 + 85},
+  { x1: abstandX + dachbodenBreite - (einrueckungX1+einrueckungX2+einrueckungX3)+11, y1: abstandY+einrueckungY1+einrueckungY2+einrueckungY3+einrueckungY4-15, x2: abstandX + dachbodenBreite - (einrueckungX1+einrueckungX2+einrueckungX3) + 11 + 52.5, y2: abstandY + einrueckungY1 + einrueckungY2 + einrueckungY3 + einrueckungY4-4},
+  { x1: abstandX + dachbodenBreite - (einrueckungX1+einrueckungX2+einrueckungX3)+11, y1: abstandY+einrueckungY1+einrueckungY2+einrueckungY3+einrueckungY4-4, x2: abstandX + dachbodenBreite - (einrueckungX1+einrueckungX2+einrueckungX3) + 11 + 52.5 + 13, y2: abstandY + einrueckungY1 + einrueckungY2 + einrueckungY3 + einrueckungY4-4+100}
+]
+
 const rooms = [
   { name: 'Abstellkammer', data: abstellkammer },
   { name: 'Flur', data: flur },
   { name: 'Kinderzimmer', data: kinderzimmer },
   { name: 'Schlafzimmer', data: schlafzimmer },
+  { name: 'Dachboden', data: dachboden },
 ]
 
 const showMenu = ref(false)
@@ -63,6 +86,10 @@ const showMenu = ref(false)
 const handleRoomSelect = (room) => {
   selectedRoom.value = room;
 }
+
+onMounted(() => {
+  selectedRoom.value = dachboden;
+})
 
 </script>
 

@@ -26,16 +26,7 @@ export const VinylCanvas = ({ plattenLaenge, plattenBreite }: VinylCanvasProps) 
 
         const ctx = ctxPlattenRef.current;
         ctx.clearRect(0, 0, canvasPlattenRef.current.width, canvasPlattenRef.current.height);
-        drawVinylPlatten();
-    }, [versatz, plattenLaenge, plattenBreite]);
 
-    const abstandX = 20;
-    const abstandY = 20;
-
-    function drawVinylPlatten() {
-        if (!ctxPlattenRef.current) return;
-
-        const ctx = ctxPlattenRef.current;
         const amountOfPlattenX = Math.floor(widthOfCanvas / plattenLaenge);
         const amountOfPlattenY = Math.floor(widthOfCanvas / plattenBreite);
 
@@ -54,7 +45,14 @@ export const VinylCanvas = ({ plattenLaenge, plattenBreite }: VinylCanvasProps) 
                 ctx.stroke();
             }
         }
-    }
+    }, [versatz, plattenLaenge, plattenBreite]);
+
+    useEffect(() => {
+        drawPlattenCanvas();
+    }, [drawPlattenCanvas]);
+
+    const abstandX = 20;
+    const abstandY = 20;
 
     return (
         <>

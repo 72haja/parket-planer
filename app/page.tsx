@@ -5,6 +5,7 @@ import { AddButton } from "@/app/components/AddButton";
 import { AddRechteckDialog } from "@/app/components/AddRechteckDialog";
 import { Rooms } from "@/app/components/Rooms";
 import { Snackbar } from "@/app/components/Snackbar";
+import { VinylWrapper } from "@/app/components/VinylWrapper";
 import { Dot, Position, Rechteck, RechteckDistancesEdge, TooltipRechteck } from "@/types";
 
 // Assume these components are imported from elsewhere
@@ -16,11 +17,8 @@ import { Dot, Position, Rechteck, RechteckDistancesEdge, TooltipRechteck } from 
 
 export default function VinylPlattenRechner() {
     const [snackbarText, setSnackbarText] = useState("");
-    const [plattenLaenge, setPlattenLaenge] = useState(63.6);
-    const [plattenBreite, setPlattenBreite] = useState(31.9);
     const [clickPosition, setClickPosition] = useState<Position>({ x: 0, y: 0 });
     const [rechtecke, setRechtecke] = useState<Rechteck[]>([]);
-    const [versatz, setVersatz] = useState(0.5);
     const [canvasWidthIncrease, setCanvasWidthIncrease] = useState(0);
     const [showAddRechteckDialog, setShowAddRechteckDialog] = useState(false);
     const [redDot, setRedDot] = useState<Dot>({ x: null, y: null });
@@ -39,9 +37,7 @@ export default function VinylPlattenRechner() {
     });
 
     const canvasRef: React.RefObject<HTMLCanvasElement | null> = useRef(null);
-    const canvasPlattenRef: React.RefObject<HTMLCanvasElement | null> = useRef(null);
     const ctxRef: React.RefObject<CanvasRenderingContext2D | null> = useRef(null);
-    const ctxPlattenRef: React.RefObject<CanvasRenderingContext2D | null> = useRef(null);
 
     const maxXOfRechtecke =
         Math.max(
@@ -63,9 +59,8 @@ export default function VinylPlattenRechner() {
 
     // Initialize canvases and add event listeners
     useEffect(() => {
-        if (canvasRef.current && canvasPlattenRef.current) {
+        if (canvasRef.current) {
             ctxRef.current = canvasRef.current.getContext("2d");
-            ctxPlattenRef.current = canvasPlattenRef.current.getContext("2d");
             drawCanvas();
             addEventListenersForCanvas();
         }
@@ -92,15 +87,11 @@ export default function VinylPlattenRechner() {
         blueDot,
         tooltipRechteck,
         dragRectangle,
-        versatz,
-        plattenBreite,
-        plattenLaenge,
         canvasWidthIncrease,
     ]);
 
     function drawCanvas() {
         drawRaumCanvas();
-        drawPlattenCanvas();
     }
 
     function drawRaumCanvas() {
@@ -136,41 +127,6 @@ export default function VinylPlattenRechner() {
             );
             ctx.stroke();
         });
-    }
-
-    function drawPlattenCanvas() {
-        if (!ctxPlattenRef.current || !canvasPlattenRef.current) return;
-
-        const ctx = ctxPlattenRef.current;
-        ctx.clearRect(0, 0, canvasPlattenRef.current.width, canvasPlattenRef.current.height);
-        drawVinylPlatten();
-    }
-
-    const abstandX = 20;
-    const abstandY = 20;
-
-    function drawVinylPlatten() {
-        if (!ctxPlattenRef.current) return;
-
-        const ctx = ctxPlattenRef.current;
-        const amountOfPlattenX = Math.floor(widthOfCanvas / plattenLaenge);
-        const amountOfPlattenY = Math.floor(widthOfCanvas / plattenBreite);
-
-        for (let i = 0; i < amountOfPlattenX; i++) {
-            for (let j = 0; j < amountOfPlattenY; j++) {
-                ctx.lineWidth = 1;
-                ctx.strokeStyle = "gray";
-                ctx.beginPath();
-                const versatzValue = j % 2 === 1 ? versatz * plattenLaenge : 0;
-                ctx.rect(
-                    abstandX + i * plattenLaenge + versatzValue,
-                    abstandY + j * plattenBreite,
-                    plattenLaenge,
-                    plattenBreite
-                );
-                ctx.stroke();
-            }
-        }
     }
 
     function handleRoomSelect(rooms: Rechteck[]) {
@@ -665,30 +621,6 @@ export default function VinylPlattenRechner() {
             <div className="max-w-screen-2xl mx-auto p-4 md:p-6 lg:p-8 bg-white rounded-lg shadow-md">
                 <Rooms onUpdateSelectedRoom={handleRoomSelect} />
 
-                <h1 className="text-3xl font-bold mb-4">Vinyl-Platten-Rechner</h1>
-                <form className="flex flex-col">
-                    <div className="w-full grid gap-2">
-                        <label className="block text-lg font-medium">
-                            Länge der Vinyl-Platte:
-                            <input
-                                type="number"
-                                value={plattenLaenge}
-                                onChange={e => setPlattenLaenge(Number(e.target.value))}
-                                className="w-full p-2 pl-10 text-lg border border-gray-400 rounded-lg focus:outline-none focus:ring focus:ring-blue-500"
-                            />
-                        </label>
-                        <label className="block text-lg font-medium">
-                            Breite der Vinyl-Platte:
-                            <input
-                                type="number"
-                                value={plattenBreite}
-                                onChange={e => setPlattenBreite(Number(e.target.value))}
-                                className="w-full p-2 pl-10 text-lg border border-gray-400 rounded-lg focus:outline-none focus:ring focus:ring-blue-500"
-                            />
-                        </label>
-                    </div>
-                </form>
-
                 <p className="text-lg font-medium mt-8">Raum</p>
 
                 <div className="grid grid-cols-[minmax(0,1fr)_max-content] grid-rows-[minmax(0,1fr)_max-content] items-center justify-items-center gap-2">
@@ -753,27 +685,7 @@ export default function VinylPlattenRechner() {
                     ))}
                 </div>
 
-                <p className="text-lg font-medium mt-8">Platten</p>
-
-                <label className="block text-lg font-medium">
-                    Versatz:
-                    <input
-                        type="number"
-                        step="0.01"
-                        value={versatz}
-                        onChange={e => setVersatz(Number(e.target.value))}
-                        className="w-full p-2 pl-10 text-lg border border-gray-400 rounded-lg focus:outline-none focus:ring focus:ring-blue-500"
-                    />
-                </label>
-
-                <div className="max-w-full w-auto aspect-square max-h-[calc(100dvh-40px)] bg-gray-200 rounded-lg shadow-md mt-4 p-4">
-                    <canvas
-                        id="platten"
-                        ref={canvasPlattenRef}
-                        width={widthOfCanvas}
-                        height={widthOfCanvas}
-                        className="w-full h-full bg-gray-200"></canvas>
-                </div>
+                <VinylWrapper />
 
                 <AddRechteckDialog
                     showDialog={showAddRechteckDialog}

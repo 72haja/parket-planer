@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Toaster, toast } from "sonner";
 import { AddButton } from "@/app/components/AddButton";
 import { AddRechteckDialog } from "@/app/components/AddRechteckDialog";
 import { Rooms } from "@/app/components/Rooms";
-import { Snackbar } from "@/app/components/Snackbar";
 import { VinylWrapper } from "@/app/components/VinylWrapper";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Dot, Position, Rechteck, RechteckDistancesEdge, TooltipRechteck } from "@/types";
 
 // Assume these components are imported from elsewhere
@@ -16,7 +18,6 @@ import { Dot, Position, Rechteck, RechteckDistancesEdge, TooltipRechteck } from 
 // import Rooms from './components/Rooms';
 
 export default function VinylPlattenRechner() {
-    const [snackbarText, setSnackbarText] = useState("");
     const [clickPosition, setClickPosition] = useState<Position>({ x: 0, y: 0 });
     const [rechtecke, setRechtecke] = useState<Rechteck[]>([]);
     const [canvasWidthIncrease, setCanvasWidthIncrease] = useState(0);
@@ -81,14 +82,7 @@ export default function VinylPlattenRechner() {
     // Redraw canvas when relevant state changes
     useEffect(() => {
         drawCanvas();
-    }, [
-        rechtecke,
-        redDot,
-        blueDot,
-        tooltipRechteck,
-        dragRectangle,
-        canvasWidthIncrease,
-    ]);
+    }, [rechtecke, redDot, blueDot, tooltipRechteck, dragRectangle, canvasWidthIncrease]);
 
     function drawCanvas() {
         drawRaumCanvas();
@@ -143,7 +137,7 @@ export default function VinylPlattenRechner() {
 
     function addRechteck(rechteck: Rechteck) {
         if (rechteck.x1 - rechteck.x2 === 0 || rechteck.y1 - rechteck.y2 === 0) {
-            setSnackbarText("Breite und Höhe müssen größer als 0 sein");
+            toast("Breite und Höhe müssen größer als 0 sein", {});
             return;
         }
 
@@ -426,7 +420,7 @@ export default function VinylPlattenRechner() {
             setClickPosition({ x: redDot.x, y: redDot.y });
         }
 
-        setSnackbarText("Position zum Hinzufügen des Rechtecks gespeichert");
+        toast("Position zum Hinzufügen des Rechtecks gespeichert");
     }
 
     function handleDoubleClickOnCanvas(event: MouseEvent) {
@@ -643,11 +637,7 @@ export default function VinylPlattenRechner() {
                     />
                 </div>
 
-                <button
-                    onClick={openAddRechteckDialog}
-                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg mt-4">
-                    Rechteck hinzufügen
-                </button>
+                <Button onClick={openAddRechteckDialog}>Rechteck hinzufügen</Button>
 
                 <div className="grid gap-2 p-4">
                     {rechtecke.map((rechteck, index) => (
@@ -655,11 +645,10 @@ export default function VinylPlattenRechner() {
                             <span>Rechteck {index}</span>
                             <label className="block text-lg font-medium">
                                 Breite:
-                                <input
+                                <Input
                                     type="number"
                                     step="0.5"
                                     value={getBreite(rechteck)}
-                                    className="w-full p-2 pl-10 text-lg border border-gray-400 rounded-lg focus:outline-none focus:ring focus:ring-blue-500"
                                     onChange={event => {
                                         handleUpdateBreite(rechteck, event.target.value);
                                         drawCanvas();
@@ -668,19 +657,17 @@ export default function VinylPlattenRechner() {
                             </label>
                             <label className="block text-lg font-medium">
                                 Höhe:
-                                <input
+                                <Input
                                     type="number"
                                     step="0.5"
                                     value={getHoehe(rechteck)}
-                                    className="w-full p-2 pl-10 text-lg border border-gray-400 rounded-lg focus:outline-none focus:ring focus:ring-blue-500"
                                     onChange={event => {
                                         handleUpdateHoehe(rechteck, event.target.value);
                                         drawCanvas();
                                     }}
                                 />
                             </label>
-                            {/* <CloseButton onClick={() => removeRechteck(index)} /> */}
-                            <button onClick={() => removeRechteck(index)}>X</button>
+                            <Button onClick={() => removeRechteck(index)}>X</Button>
                         </div>
                     ))}
                 </div>
@@ -696,7 +683,7 @@ export default function VinylPlattenRechner() {
                 />
             </div>
 
-            <Snackbar text={snackbarText} onClose={() => setSnackbarText("")} />
+            <Toaster position="bottom-center" closeButton />
         </div>
     );
 }

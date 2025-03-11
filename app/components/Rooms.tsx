@@ -1,7 +1,8 @@
+import { useState } from "react";
 import CloseButton from "@/app/components/CloseButton";
 import { rooms } from "@/app/data/roomsData";
 import { Rechteck } from "@/types";
-import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
 interface RoomsProps {
     onUpdateSelectedRoom: (roomData: Rechteck[]) => void;
@@ -17,11 +18,7 @@ export const Rooms = ({ onUpdateSelectedRoom }: RoomsProps) => {
 
     return (
         <div className="relative grid grid-cols-[max-content]">
-            <button
-                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg mt-4"
-                onClick={() => setShowMenu(!showMenu)}>
-                Räume
-            </button>
+            <Button onClick={() => setShowMenu(!showMenu)}>Räume</Button>
 
             <div className="relative">
                 {showMenu && (
@@ -42,11 +39,9 @@ export const Rooms = ({ onUpdateSelectedRoom }: RoomsProps) => {
                                     // }}
                                 >
                                     <span>{room.name}</span>
-                                    <button
-                                        onClick={() => handleRoomSelect(room.data)}
-                                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">
+                                    <Button onClick={() => handleRoomSelect(room.data)}>
                                         Auswählen
-                                    </button>
+                                    </Button>
                                 </div>
                             ))}
                         </div>

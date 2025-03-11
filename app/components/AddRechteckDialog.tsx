@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Rechteck } from "@/types";
 
 interface AddRechteckDialogProps {
@@ -50,55 +52,44 @@ export const AddRechteckDialog = ({
                 <form onSubmit={handleSave}>
                     <label className="block text-lg font-medium mb-2">
                         Höhe
-                        <input
+                        <Input
                             type="number"
                             step="0.1"
                             value={hoehe}
                             onChange={e => setHoehe(parseFloat(e.target.value))}
-                            className="w-full p-2 pl-10 text-lg border border-gray-400 rounded-lg focus:outline-none focus:ring focus:ring-blue-500"
                         />
                     </label>
                     <label className="block text-lg font-medium mb-2">
                         Breite
-                        <input
+                        <Input
                             type="number"
                             step="0.1"
                             value={breite}
                             onChange={e => setBreite(parseFloat(e.target.value))}
-                            className="w-full p-2 pl-10 text-lg border border-gray-400 rounded-lg focus:outline-none focus:ring focus:ring-blue-500"
                         />
                     </label>
                     <label className="block text-lg font-medium mb-2">
                         X Position
-                        <input
+                        <Input
                             type="number"
                             step="0.1"
                             value={posX}
                             onChange={e => setPosX(parseFloat(e.target.value))}
-                            className="w-full p-2 pl-10 text-lg border border-gray-400 rounded-lg focus:outline-none focus:ring focus:ring-blue-500"
                         />
                     </label>
                     <label className="block text-lg font-medium mb-2">
                         Y Position
-                        <input
+                        <Input
                             type="number"
                             step="0.1"
                             value={posY}
                             onChange={e => setPosY(parseFloat(e.target.value))}
-                            className="w-full p-2 pl-10 text-lg border border-gray-400 rounded-lg focus:outline-none focus:ring focus:ring-blue-500"
                         />
                     </label>
-                    <button
-                        type="submit"
-                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg mt-4"
-                        onClick={handleSave}>
+                    <Button type="submit" onClick={handleSave}>
                         Speichern
-                    </button>
-                    <button
-                        onClick={close}
-                        className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg mt-4 ml-4">
-                        Abbrechen
-                    </button>
+                    </Button>
+                    <Button onClick={close}>Abbrechen</Button>
                 </form>
             </div>
         </div>

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Input } from "@/components/ui/input";
 
 interface VinylCanvasProps {
     plattenLaenge: number;
@@ -61,12 +62,11 @@ export const VinylCanvas = ({ plattenLaenge, plattenBreite }: VinylCanvasProps) 
 
             <label className="block text-lg font-medium">
                 Versatz:
-                <input
+                <Input
                     type="number"
                     step="0.01"
                     value={versatz}
                     onChange={e => setVersatz(Number(e.target.value))}
-                    className="w-full p-2 pl-10 text-lg border border-gray-400 rounded-lg focus:outline-none focus:ring focus:ring-blue-500"
                 />
             </label>
 

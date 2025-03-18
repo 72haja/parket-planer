@@ -612,7 +612,7 @@ export default function VinylPlattenRechner() {
 
     return (
         <div className="p-10">
-            <div className="max-w-screen-2xl mx-auto p-4 md:p-6 lg:p-8 bg-white rounded-lg shadow-md">
+            <div className="max-w-(--breakpoint-2xl) mx-auto p-4 md:p-6 lg:p-8 bg-white rounded-lg shadow-md">
                 <Rooms onUpdateSelectedRoom={handleRoomSelect} />
 
                 <p className="text-lg font-medium mt-8">Raum</p>

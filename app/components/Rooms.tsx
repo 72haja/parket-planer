@@ -1,8 +1,8 @@
 import { useState } from "react";
 import CloseButton from "@/app/components/CloseButton";
 import { rooms } from "@/app/data/roomsData";
-import { Rechteck } from "@/types";
 import { Button } from "@/components/ui/button";
+import { Rechteck } from "@/types";
 
 interface RoomsProps {
     onUpdateSelectedRoom: (roomData: Rechteck[]) => void;

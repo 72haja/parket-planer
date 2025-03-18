@@ -24,7 +24,7 @@ export const Rooms = ({ onUpdateSelectedRoom }: RoomsProps) => {
                 {showMenu && (
                     <div className="absolute left-0 top-0 w-max h-max z-10">
                         <CloseButton
-                            className="absolute -top-6 -right-6 p-2 rounded-full text-white"
+                            className="absolute -top-6 -right-6 p-2 rounded-full aspect-square text-white"
                             onClick={() => setShowMenu(false)}
                             color="bg-red-500"
                         />

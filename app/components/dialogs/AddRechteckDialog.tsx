@@ -52,7 +52,7 @@ export const AddRechteckDialog = () => {
     if (!showDialog) return null;
 
     return (
-        <div className="fixed top-0 left-0 w-full h-full bg-gray-800 bg-opacity-50 flex items-center justify-center">
+        <div className="fixed top-0 left-0 w-full h-full bg-gray-800/25 flex items-center justify-center">
             <div className="bg-white rounded-lg shadow-md p-4 w-1/2">
                 <h2 className="text-lg font-bold mb-4">Rechteck hinzufügen</h2>
                 <form onSubmit={handleSave}>

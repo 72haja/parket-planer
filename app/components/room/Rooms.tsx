@@ -1,18 +1,17 @@
-import { useState } from "react";
+import { FC, useState } from "react";
 import CloseButton from "@/app/components/room/CloseButton";
 import { rooms } from "@/app/data/roomsData";
+import { useRechtecke } from "@/app/provider/RechteckeProvider";
 import { Button } from "@/components/ui/button";
 import { Rechteck } from "@/types";
 
-interface RoomsProps {
-    onUpdateSelectedRoom: (roomData: Rechteck[]) => void;
-}
+export const Rooms: FC = () => {
+    const { setRechtecke } = useRechtecke();
 
-export const Rooms = ({ onUpdateSelectedRoom }: RoomsProps) => {
     const [showMenu, setShowMenu] = useState(false);
 
     const handleRoomSelect = (roomData: Rechteck[]) => {
-        onUpdateSelectedRoom(roomData);
+        setRechtecke(roomData);
         setShowMenu(false);
     };
 

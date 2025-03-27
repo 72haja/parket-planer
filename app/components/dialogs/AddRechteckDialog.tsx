@@ -1,23 +1,20 @@
-import React, { useEffect, useState } from "react";
+"use client";
+
+import { useEffect, useState } from "react";
+import { useAddRecheckDialog } from "@/app/provider/AddRecheckDialogProvider";
+import { useClick } from "@/app/provider/ClickProvider";
+import { useRechtecke } from "@/app/provider/RechteckeProvider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Rechteck } from "@/types";
 
-interface AddRechteckDialogProps {
-    showDialog: boolean;
-    xPosition: number;
-    yPosition: number;
-    onSave: (rechteck: Rechteck) => void;
-    onClose: () => void;
-}
+export const AddRechteckDialog = () => {
+    const { addRechteck } = useRechtecke();
+    const { showDialog, closeDialog } = useAddRecheckDialog();
+    const {
+        clickPosition: { x: xPosition, y: yPosition },
+    } = useClick();
 
-export const AddRechteckDialog = ({
-    showDialog,
-    xPosition,
-    yPosition,
-    onSave,
-    onClose,
-}: AddRechteckDialogProps) => {
     const [hoehe, setHoehe] = useState(0);
     const [breite, setBreite] = useState(0);
     const [posX, setPosX] = useState(0);
@@ -31,8 +28,17 @@ export const AddRechteckDialog = ({
             y1: posY,
             y2: posY + hoehe,
         };
-        onSave(newRechteck);
-        onClose();
+        addRechteck(newRechteck);
+        handleCloseDialog();
+    };
+
+    const handleCloseDialog = () => {
+        setHoehe(0);
+        setBreite(0);
+        setPosX(0);
+        setPosY(0);
+
+        closeDialog();
     };
 
     useEffect(() => {
@@ -89,7 +95,7 @@ export const AddRechteckDialog = ({
                     <Button type="submit" onClick={handleSave}>
                         Speichern
                     </Button>
-                    <Button onClick={close}>Abbrechen</Button>
+                    <Button onClick={handleCloseDialog}>Abbrechen</Button>
                 </form>
             </div>
         </div>

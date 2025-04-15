@@ -20,7 +20,10 @@ export const RechteckeProvider: FC<PropsWithChildren> = ({ children }) => {
     const [rechtecke, setRechtecke] = useState<Rechteck[]>([]);
 
     const addRechteck = (rechteck: Rechteck) => {
-        if (rechteck.x1 - rechteck.x2 === 0 || rechteck.y1 - rechteck.y2 === 0) {
+        if (
+            !rechteck.isDragging &&
+            (rechteck.x1 - rechteck.x2 === 0 || rechteck.y1 - rechteck.y2 === 0)
+        ) {
             toast("Breite und Höhe müssen größer als 0 sein", {});
             return;
         }

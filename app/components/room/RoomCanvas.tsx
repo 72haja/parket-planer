@@ -4,15 +4,15 @@ import { AddButton } from "@/app/components/room/AddButton";
 import { useAddRecheckDialog } from "@/app/provider/AddRecheckDialogProvider";
 import { useClick } from "@/app/provider/ClickProvider";
 import { useRechtecke } from "@/app/provider/RechteckeProvider";
-import { Dot, Rechteck, RechteckDistancesEdge, TooltipRechteck } from "@/types";
 import { cn } from "@/lib/utils";
+import { Dot, Rechteck, RechteckDistancesEdge, TooltipRechteck } from "@/types";
 
 interface RoomCanvasProps {
     drawCanvasTrigger: number;
 }
 
 export const RoomCanvas: FC<RoomCanvasProps> = ({ drawCanvasTrigger }) => {
-    const { rechtecke, setRechtecke } = useRechtecke();
+    const { rechtecke, setRechtecke, addRechteck } = useRechtecke();
     const { openDialog } = useAddRecheckDialog();
     const { setClickPosition } = useClick();
 
@@ -24,34 +24,10 @@ export const RoomCanvas: FC<RoomCanvasProps> = ({ drawCanvasTrigger }) => {
         x: 0,
         y: 0,
     });
-    const [dragRectangle, setDragRectangle] = useState<Rechteck>({
-        x1: 0,
-        y1: 0,
-        x2: 0,
-        y2: 0,
-        isDragging: false,
-    });
+    const dragRectangle = useRef<Rechteck | undefined>(undefined);
 
     const canvasRef: React.RefObject<HTMLCanvasElement | null> = useRef(null);
     const ctxRef: React.RefObject<CanvasRenderingContext2D | null> = useRef(null);
-
-    const maxXOfRechtecke =
-        Math.max(
-            ...rechtecke
-                .filter(rechteck => !rechteck.isDragging)
-                .flatMap(rechteck => [rechteck.x1, rechteck.x2]),
-            0
-        ) + canvasWidthIncrease;
-
-    const maxYOfRechtecke =
-        Math.max(
-            ...rechtecke
-                .filter(rechteck => !rechteck.isDragging)
-                .flatMap(rechteck => [rechteck.y1, rechteck.y2]),
-            0
-        ) + canvasWidthIncrease;
-
-    const widthOfCanvas = (Math.max(maxXOfRechtecke, maxYOfRechtecke) + canvasWidthIncrease) * 1.1;
 
     // Initialize canvases and add event listeners
     useEffect(() => {
@@ -133,12 +109,11 @@ export const RoomCanvas: FC<RoomCanvasProps> = ({ drawCanvasTrigger }) => {
 
     function getMousePos(canvas: HTMLCanvasElement, evt: MouseEvent) {
         const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
-
+        const x = ((evt.clientX - rect.left) / rect.width) * sizeOfCanvas;
+        const y = ((evt.clientY - rect.top) / rect.height) * sizeOfCanvas;
         return {
-            x: (evt.clientX - rect.left) * scaleX,
-            y: (evt.clientY - rect.top) * scaleY,
+            x,
+            y,
         };
     }
 
@@ -411,9 +386,16 @@ export const RoomCanvas: FC<RoomCanvasProps> = ({ drawCanvasTrigger }) => {
     }
 
     function handleMouseDownOnCanvas(event: MouseEvent) {
-        setDragRectangle(prev => ({ ...prev, isDragging: true }));
+        dragRectangle.current = {
+            x1: 0,
+            y1: 0,
+            x2: 0,
+            y2: 0,
+            isDragging: true,
+        };
 
         const rechteckeHasAlreadyDraggingElement = rechtecke.some(rechteck => rechteck.isDragging);
+
         if (rechteckeHasAlreadyDraggingElement) {
             return;
         }
@@ -424,7 +406,7 @@ export const RoomCanvas: FC<RoomCanvasProps> = ({ drawCanvasTrigger }) => {
         const mouseXOnCanvas = blueDot.x || redDot.x || mousePos.x;
         const mouseYOnCanvas = blueDot.y || redDot.y || mousePos.y;
 
-        const newDragRectangle = {
+        const newDragRectangle: Rechteck = {
             x1: roundToNextHalf(mouseXOnCanvas),
             y1: roundToNextHalf(mouseYOnCanvas),
             x2: roundToNextHalf(mouseXOnCanvas),
@@ -432,12 +414,18 @@ export const RoomCanvas: FC<RoomCanvasProps> = ({ drawCanvasTrigger }) => {
             isDragging: true,
         };
 
-        setDragRectangle(newDragRectangle);
-        setRechtecke(prev => [...prev, newDragRectangle]);
+        dragRectangle.current = newDragRectangle;
+        addRechteck(newDragRectangle);
     }
 
     function handleMouseUpOnCanvas() {
-        const dragRectangleCopy = { ...dragRectangle, isDragging: false };
+        console.log("handleMouseUpOnCanvas - dragRectangle", dragRectangle.current);
+
+        if (!dragRectangle.current) {
+            return;
+        }
+
+        const dragRectangleCopy = { ...dragRectangle.current, isDragging: false };
 
         setRechtecke(prev => {
             // Remove the dragging rectangle
@@ -453,28 +441,36 @@ export const RoomCanvas: FC<RoomCanvasProps> = ({ drawCanvasTrigger }) => {
             return filtered;
         });
 
-        setDragRectangle({ x1: 0, y1: 0, x2: 0, y2: 0, isDragging: false });
+        dragRectangle.current = undefined;
         setCanvasWidthIncrease(0);
     }
 
     function handleMousemove(event: MouseEvent) {
-        event.stopPropagation();
+        if (!dragRectangle.current) {
+            return;
+        }
 
-        if (!dragRectangle.isDragging || !canvasRef.current) return;
+        event.stopPropagation();
+        if (!dragRectangle.current.isDragging || !canvasRef.current) {
+            return;
+        }
 
         const mousePos = getMousePos(canvasRef.current, event);
-        const mouseXOnCanvas = redDot.x && dragRectangle.x1 !== redDot.x ? redDot.x : mousePos.x;
-        const mouseYOnCanvas = redDot.y && dragRectangle.y1 !== redDot.y ? redDot.y : mousePos.y;
+        const mouseXOnCanvas =
+            redDot.x && dragRectangle.current.x1 !== redDot.x ? redDot.x : mousePos.x;
+        const mouseYOnCanvas =
+            redDot.y && dragRectangle.current.y1 !== redDot.y ? redDot.y : mousePos.y;
 
-        if (mouseXOnCanvas > widthOfCanvas || mouseYOnCanvas > widthOfCanvas) return;
+        if (sizeOfCanvas > 0 && (mouseXOnCanvas > sizeOfCanvas || mouseYOnCanvas > sizeOfCanvas)) {
+            return;
+        }
 
         const updatedDragRectangle = {
-            ...dragRectangle,
+            ...dragRectangle.current,
             x2: roundToNextHalf(mouseXOnCanvas),
             y2: roundToNextHalf(mouseYOnCanvas),
         };
-
-        setDragRectangle(updatedDragRectangle);
+        dragRectangle.current = updatedDragRectangle;
 
         // Update the dragging rectangle in the rechtecke array
         setRechtecke(prev => prev.map(r => (r.isDragging ? updatedDragRectangle : r)));
@@ -533,7 +529,7 @@ export const RoomCanvas: FC<RoomCanvasProps> = ({ drawCanvasTrigger }) => {
     function drawToolTipWithDistanceToX1AndY1() {
         if (
             tooltipRechteck.rechteck === null ||
-            dragRectangle.isDragging ||
+            (dragRectangle.current && dragRectangle.current.isDragging) ||
             !ctxRef.current ||
             !redDot.x ||
             !redDot.y
@@ -551,6 +547,29 @@ export const RoomCanvas: FC<RoomCanvasProps> = ({ drawCanvasTrigger }) => {
         ctx.fillText(`x1: ${distanceToX1}, y1: ${distanceToY1}`, x, y);
     }
 
+    const [zoom, setZoom] = useState(1);
+
+    const handleZoom = (event: WheelEvent) => {
+        event.preventDefault();
+        const zoomFactor = 0.01;
+        const newZoom = Math.max(
+            0.1,
+            Math.min(2, zoom + (event.deltaY > 0 ? -zoomFactor : zoomFactor))
+        );
+        setZoom(newZoom);
+
+        if (ctxRef.current && canvasRef.current) {
+            //     ctxRef.current.scale(newZoom, newZoom);
+            //     ctxRef.current.translate(
+            //         event.deltaX * (1 - newZoom),
+            //         event.deltaY * (1 - newZoom)
+            //     );
+            //     ctxRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+            //     drawCanvas();
+            console.log("drawCanvas");
+        }
+    };
+
     function addEventListenersForCanvas() {
         if (!canvasRef.current) return;
 
@@ -560,17 +579,28 @@ export const RoomCanvas: FC<RoomCanvasProps> = ({ drawCanvasTrigger }) => {
         canvasRef.current.addEventListener("mousedown", handleMouseDownOnCanvas);
         canvasRef.current.addEventListener("mouseup", handleMouseUpOnCanvas);
         canvasRef.current.addEventListener("mousemove", handleMousemove);
+        canvasRef.current.addEventListener("wheel", handleZoom);
     }
+
+    const sizeOfCanvas = 1000;
 
     return (
         <div className="grid grid-cols-[minmax(0,1fr)_max-content] grid-rows-[minmax(0,1fr)_max-content] items-center justify-items-center gap-2">
             <div className="max-w-full w-auto aspect-square max-h-[calc(100dvh-40px)] bg-gray-200 rounded-lg shadow-md mt-4 p-4">
+                <div>
+                    <p>isdragging {dragRectangle.current?.isDragging}</p>
+                    <p>{JSON.stringify(dragRectangle)}</p>
+                </div>
+
                 <canvas
                     id="raum"
                     ref={canvasRef}
-                    width={widthOfCanvas}
-                    height={widthOfCanvas}
-                    className={cn(widthOfCanvas ? "h-full" : "h-[50vh]", "w-full bg-gray-200 aspect-square")}></canvas>
+                    width={sizeOfCanvas}
+                    height={sizeOfCanvas}
+                    className={cn(
+                        // sizeOfCanvas ? "h-full" : "h-[50vh]",
+                        "h-full w-full bg-gray-200 aspect-square"
+                    )}></canvas>
             </div>
 
             <AddButton

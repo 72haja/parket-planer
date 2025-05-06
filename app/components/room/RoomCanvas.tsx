@@ -26,6 +26,8 @@ export const RoomCanvas: FC<RoomCanvasProps> = ({ drawCanvasTrigger }) => {
     });
     const dragRectangle = useRef<Rechteck | undefined>(undefined);
 
+    const [zoom, setZoom] = useState(1);
+
     const canvasRef: React.RefObject<HTMLCanvasElement | null> = useRef(null);
     const ctxRef: React.RefObject<CanvasRenderingContext2D | null> = useRef(null);
 
@@ -62,6 +64,7 @@ export const RoomCanvas: FC<RoomCanvasProps> = ({ drawCanvasTrigger }) => {
     // Redraw canvas when relevant state changes
     useEffect(() => {
         drawCanvas();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [
         drawCanvasTrigger,
         rechtecke,
@@ -109,8 +112,12 @@ export const RoomCanvas: FC<RoomCanvasProps> = ({ drawCanvasTrigger }) => {
 
     function getMousePos(canvas: HTMLCanvasElement, evt: MouseEvent) {
         const rect = canvas.getBoundingClientRect();
-        const x = ((evt.clientX - rect.left) / rect.width) * sizeOfCanvas;
-        const y = ((evt.clientY - rect.top) / rect.height) * sizeOfCanvas;
+        const x = ((evt.clientX - rect.left) / rect.width) * sizeOfCanvas * zoom;
+        const y = ((evt.clientY - rect.top) / rect.height) * sizeOfCanvas * zoom;
+
+        console.log('scale', ctxRef.current.getScale);
+
+        console.log("x", x, y, zoom);
         return {
             x,
             y,
@@ -547,27 +554,24 @@ export const RoomCanvas: FC<RoomCanvasProps> = ({ drawCanvasTrigger }) => {
         ctx.fillText(`x1: ${distanceToX1}, y1: ${distanceToY1}`, x, y);
     }
 
-    const [zoom, setZoom] = useState(1);
-
     const handleZoom = (event: WheelEvent) => {
         event.preventDefault();
         const zoomFactor = 0.01;
         const newZoom = Math.max(
-            0.1,
+            0.01,
             Math.min(2, zoom + (event.deltaY > 0 ? -zoomFactor : zoomFactor))
         );
-        setZoom(newZoom);
 
+        setZoom(newZoom);
         if (ctxRef.current && canvasRef.current) {
-            //     ctxRef.current.scale(newZoom, newZoom);
-            //     ctxRef.current.translate(
-            //         event.deltaX * (1 - newZoom),
-            //         event.deltaY * (1 - newZoom)
-            //     );
-            //     ctxRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-            //     drawCanvas();
-            console.log("drawCanvas");
+            ctxRef.current.scale(newZoom, newZoom);
+            ctxRef.current.translate(event.deltaX * (1 - newZoom), event.deltaY * (1 - newZoom));
+            ctxRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
         }
+
+        setTimeout(() => {
+            drawCanvas();
+        }, 10);
     };
 
     function addEventListenersForCanvas() {

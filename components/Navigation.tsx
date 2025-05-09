@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
@@ -33,7 +32,7 @@ export default function Navigation() {
             label: "Mein Konto",
             icon: "pi pi-user",
             command: () => {
-                // Hier könnte man zur Profilseite navigieren
+                window.location.href = "/profile"
             },
         },
         {
@@ -60,6 +59,7 @@ export default function Navigation() {
         {
             label: "Startseite",
             icon: "pi pi-home",
+            visible: !user,
             command: () => {
                 window.location.href = "/";
             },
@@ -75,6 +75,7 @@ export default function Navigation() {
         {
             label: "Demo",
             icon: "pi pi-play",
+            visible: !user,
             command: () => {
                 window.location.href = "/projects/demo";
             },
@@ -136,7 +137,7 @@ export default function Navigation() {
                 model={navItems.filter(item => item.visible !== false)}
                 end={endTemplate}
                 start={startTemplate}
-                className="border-none px-4"
+                className="border-none px-4 gap-4"
             />
         </header>
     );

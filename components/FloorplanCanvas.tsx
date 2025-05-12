@@ -1,428 +1,157 @@
-"use client";
+import React, { useEffect, useRef, useState } from "react";
+import { IconUtils } from "primereact/utils";
 
-import { useEffect, useRef, useState } from "react";
-import { Button } from "primereact/button";
-import type { Door, Floor, Flooring, Wall } from "@/lib/supabase";
-
-interface FloorplanCanvasProps {
-    floor: Floor;
-    floorings?: Flooring[];
-    scale?: number; // scale in pixels per cm
-    editable?: boolean;
-    onFloorUpdate?: (floor: Floor) => void;
-    onFlooringPositionUpdate?: (flooring: Flooring, position: [number, number]) => void;
+interface Rectangle {
+    id: number;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
 }
 
-export default function FloorplanCanvas({
-    floor,
-    floorings = [],
-    scale = 0.5,
-    editable = true,
-    onFloorUpdate,
-    onFlooringPositionUpdate,
-}: FloorplanCanvasProps) {
+const FloorplanCanvas: React.FC = () => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const [currentTool, setCurrentTool] = useState<"wall" | "door" | "select" | "move">("select");
+    const [isDrawing, setIsDrawing] = useState(false);
+    const [startPos, setStartPos] = useState<{ x: number; y: number } | null>(null);
+    const [rectangles, setRectangles] = useState<Rectangle[]>([]);
 
-    // Zustand für das aktuelle Zeichnen einer Wand
-    const [drawingWall, setDrawingWall] = useState<{
-        id: string;
-        points: [number, number][];
-    } | null>(null);
-
-    // Zustand für das Verschieben von Elementen (Drag & Drop)
-    const [dragItem, setDragItem] = useState<{
-        type: "flooring" | "wall" | "door";
-        id: string;
-        startPos: [number, number];
-        offset: [number, number];
-    } | null>(null);
-
-    // Canvas neu zeichnen, wenn sich die Props ändern
-    useEffect(() => {
-        drawFloorplan();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [floor, floorings, scale, currentTool]);
-
-    // Zeichnet den Grundriss auf den Canvas
-    const drawFloorplan = () => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return;
-
-        // Canvas zurücksetzen
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // Raster zeichnen
-        drawGrid(ctx, canvas.width, canvas.height, 20 * scale); // 20cm Raster
-
-        // Bodenbeläge zeichnen (zuerst, damit sie im Hintergrund sind)
-        floorings
-            .filter(f => f.floorId === floor.id)
-            .forEach(flooring => {
-                drawFlooring(ctx, flooring);
-            });
-
-        // Wände zeichnen
-        floor.walls.forEach(wall => {
-            drawWall(ctx, wall);
-        });
-
-        // Türen zeichnen
-        floor.doors.forEach(door => {
-            drawDoor(ctx, door);
-        });
-
-        // Wand beim Zeichnen anzeigen
-        if (drawingWall && drawingWall.points.length > 0 && drawingWall.points[0] !== undefined) {
-            ctx.beginPath();
-            ctx.lineWidth = 10; // Standarddicke beim Zeichnen
-            ctx.strokeStyle = "#33a";
-
-            ctx.moveTo(drawingWall.points[0][0] * scale, drawingWall.points[0][1] * scale);
-
-            for (let i = 1; i < drawingWall.points.length; i++) {
-                const drawingWallPoint = drawingWall.points[i];
-                if (drawingWallPoint === undefined) {
-                    continue;
-                }
-                ctx.lineTo(drawingWallPoint[0] * scale, drawingWallPoint[1] * scale);
-            }
-
-            ctx.stroke();
-        }
-    };
-
-    // Hilfsfunktion zum Zeichnen eines Rasters
-    const drawGrid = (
+    // Helper function to draw a rectangle with consistent label placement
+    const drawRectangleWithLabels = (
         ctx: CanvasRenderingContext2D,
+        x: number,
+        y: number,
         width: number,
-        height: number,
-        gridSize: number
+        height: number
     ) => {
-        ctx.beginPath();
-        ctx.strokeStyle = "#eee";
-        ctx.lineWidth = 1;
+        // Calculate normalized coordinates for drawing
+        const normalizedX = width < 0 ? x + width : x;
+        const normalizedY = height < 0 ? y + height : y;
+        const normalizedWidth = Math.abs(width);
+        const normalizedHeight = Math.abs(height);
 
-        // Vertikale Linien
-        for (let x = 0; x <= width; x += gridSize) {
-            ctx.moveTo(x, 0);
-            ctx.lineTo(x, height);
-        }
+        // Draw rectangle
+        ctx.strokeStyle = "black";
+        ctx.strokeRect(x, y, width, height);
 
-        // Horizontale Linien
-        for (let y = 0; y <= height; y += gridSize) {
-            ctx.moveTo(0, y);
-            ctx.lineTo(width, y);
-        }
+        // Draw width text at top of rectangle
+        ctx.font = "12px Arial";
+        ctx.fillStyle = "black";
+        ctx.textAlign = "center";
+        ctx.fillText(`${normalizedWidth}px`, normalizedX + normalizedWidth / 2, normalizedY - 5);
 
-        ctx.stroke();
-    };
-
-    // Hilfsfunktion zum Zeichnen einer Wand
-    const drawWall = (ctx: CanvasRenderingContext2D, wall: Wall) => {
-        if (wall.points.length < 2 || wall.points[0] === undefined) {
-            return;
-        }
-
-        ctx.beginPath();
-        ctx.lineWidth = wall.thickness * scale;
-        ctx.strokeStyle = "#555";
-        ctx.lineCap = "round";
-        ctx.lineJoin = "round";
-
-        ctx.moveTo(wall.points[0][0] * scale, wall.points[0][1] * scale);
-
-        for (let i = 1; i < wall.points.length; i++) {
-            const wallPoint = wall.points[i];
-            if (wallPoint === undefined) {
-                continue;
-            }
-            ctx.lineTo(wallPoint[0] * scale, wallPoint[1] * scale);
-        }
-
-        ctx.stroke();
-    };
-
-    // Hilfsfunktion zum Zeichnen einer Tür
-    const drawDoor = (ctx: CanvasRenderingContext2D, door: Door) => {
+        // Draw height text to the left of rectangle
         ctx.save();
-        ctx.translate(door.position[0] * scale, door.position[1] * scale);
-        ctx.rotate((door.rotation * Math.PI) / 180);
-
-        // Türöffnung (Bogen)
-        ctx.beginPath();
-        ctx.strokeStyle = "#333";
-        ctx.lineWidth = 2;
-        ctx.arc(0, 0, (door.width * scale) / 2, 0, Math.PI, false);
-        ctx.stroke();
-
-        // Türrahmen
-        ctx.beginPath();
-        ctx.rect((-door.width * scale) / 2, -5 * scale, door.width * scale, 10 * scale);
-        ctx.strokeStyle = "#333";
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
+        ctx.translate(normalizedX - 5, normalizedY + normalizedHeight / 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.textAlign = "center";
+        ctx.fillText(`${normalizedHeight}px`, 0, 0);
         ctx.restore();
     };
 
-    // Hilfsfunktion zum Zeichnen eines Bodenbelags
-    const drawFlooring = (ctx: CanvasRenderingContext2D, flooring: Flooring) => {
-        const tileWidthPx = flooring.tileWidth * scale;
-        const tileHeightPx = flooring.tileHeight * scale;
-        const xOffset = flooring.position[0] * scale;
-        const yOffset = flooring.position[1] * scale;
+    // Redraw canvas whenever rectangles array changes
+    useEffect(() => {
+        if (!canvasRef.current) return;
 
-        // Berechne Versatz pro Reihe
-        const rowOffset = flooring.offset * tileWidthPx;
-
-        ctx.save();
-
-        // Bestimme das Zeichenfeld basierend auf dem sichtbaren Bereich
-        const canvas = canvasRef.current!;
-        const visibleTilesX = Math.ceil(canvas.width / tileWidthPx) + 1;
-        const visibleTilesY = Math.ceil(canvas.height / tileHeightPx) + 1;
-
-        // Zeichne die Kacheln
-        for (let y = -1; y < visibleTilesY; y++) {
-            for (let x = -1; x < visibleTilesX; x++) {
-                // Berechne die Position jeder Kachel
-                const tileXPos = xOffset + x * tileWidthPx + (y % 2 !== 0 ? rowOffset : 0);
-                const tileYPos = yOffset + y * tileHeightPx;
-
-                // Zeichne die Kachelumrisse
-                ctx.beginPath();
-                ctx.rect(tileXPos, tileYPos, tileWidthPx, tileHeightPx);
-                ctx.strokeStyle = "#999";
-                ctx.lineWidth = 0.5;
-                ctx.stroke();
-            }
+        const ctx = canvasRef.current.getContext("2d");
+        if (ctx) {
+            ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+            rectangles.forEach(({ x, y, width, height }) => {
+                drawRectangleWithLabels(ctx, x, y, width, height);
+            });
         }
+    }, [rectangles]);
 
-        // Zeichne einen hervorgehobenen Rahmen um den Bodenbelag
-        ctx.beginPath();
-        ctx.rect(xOffset, yOffset, visibleTilesX * tileWidthPx, visibleTilesY * tileHeightPx);
-        ctx.strokeStyle = "#0066cc";
-        ctx.lineWidth = 2;
-        ctx.setLineDash([5, 5]);
-        ctx.stroke();
-
-        ctx.restore();
-    };
-
-    // Event-Handler für Mausklicks
-    const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
-        if (!editable) return;
-
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-
-        // Berechne die Position im Canvas-Koordinatensystem
-        const rect = canvas.getBoundingClientRect();
-        const x = (e.clientX - rect.left) / scale;
-        const y = (e.clientY - rect.top) / scale;
-
-        switch (currentTool) {
-            case "wall":
-                handleWallDrawing(x, y);
-                break;
-            case "door":
-                handleDoorPlacement(x, y);
-                break;
-            case "select":
-                handleSelection(x, y);
-                break;
-            case "move":
-                // Wird durch mousedown/move/up events behandelt
-                break;
-        }
-    };
-
-    // Handler für das Zeichnen von Wänden
-    const handleWallDrawing = (x: number, y: number) => {
-        // Wenn noch keine Wand gezeichnet wird, eine neue erstellen
-        if (!drawingWall) {
-            const newWall = {
-                id: crypto.randomUUID(),
-                points: [[Math.round(x), Math.round(y)]] as [number, number][],
-            };
-            setDrawingWall(newWall);
-            return;
-        }
-
-        // Punkt zur aktuellen Wand hinzufügen
-        const updatedWall = {
-            ...drawingWall,
-            points: [...drawingWall.points, [Math.round(x), Math.round(y)] as [number, number]],
-        };
-        setDrawingWall(updatedWall);
-
-        // Nach dem dritten Punkt oder bei Doppelklick die Wand fertigstellen
-        if (updatedWall.points.length > 2) {
-            const newWall: Wall = {
-                id: drawingWall.id,
-                points: drawingWall.points,
-                thickness: 10, // Standarddicke, könnte anpassbar sein
-            };
-
-            const updatedFloor = {
-                ...floor,
-                walls: [...floor.walls, newWall],
-            };
-
-            if (onFloorUpdate) {
-                onFloorUpdate(updatedFloor);
-            }
-
-            setDrawingWall(null);
-        }
-    };
-
-    // Handler für das Platzieren von Türen
-    const handleDoorPlacement = (x: number, y: number) => {
-        const newDoor: Door = {
-            id: crypto.randomUUID(),
-            position: [Math.round(x), Math.round(y)],
-            width: 80, // Standardbreite 80cm
-            rotation: 0, // Standard-Rotation
-        };
-
-        const updatedFloor = {
-            ...floor,
-            doors: [...floor.doors, newDoor],
-        };
-
-        if (onFloorUpdate) {
-            onFloorUpdate(updatedFloor);
-        }
-    };
-
-    // Handler für die Auswahl von Elementen
-    const handleSelection = (x: number, y: number) => {
-        // Hier könnte eine Logik zur Elementauswahl implementiert werden
-        // Z.B. um Elemente zu markieren oder zum Bearbeiten auszuwählen
-        console.log("Element ausgewählt bei:", x, y);
-    };
-
-    // Handler für den Beginn des Drag & Drop
     const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
-        if (!editable || currentTool !== "move") return;
-
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-
-        const rect = canvas.getBoundingClientRect();
-        const x = (e.clientX - rect.left) / scale;
-        const y = (e.clientY - rect.top) / scale;
-
-        // Hier könnte eine Logik implementiert werden, um festzustellen,
-        // welches Element angeklickt wurde (Wand, Tür oder Bodenbelag)
-
-        // Beispiel: Prüfe, ob ein Bodenbelag angeklickt wurde
-        const clickedFlooring = floorings.find(flooring => {
-            const xPos = flooring.position[0];
-            const yPos = flooring.position[1];
-            const width = flooring.tileWidth * 5; // Vereinfachte Breite für Klickerkennung
-            const height = flooring.tileHeight * 5; // Vereinfachte Höhe für Klickerkennung
-
-            return x >= xPos && x <= xPos + width && y >= yPos && y <= yPos + height;
-        });
-
-        if (clickedFlooring) {
-            setDragItem({
-                type: "flooring",
-                id: clickedFlooring.id,
-                startPos: [...clickedFlooring.position] as [number, number],
-                offset: [x - clickedFlooring.position[0], y - clickedFlooring.position[1]] as [
-                    number,
-                    number,
-                ],
+        const rect = canvasRef.current?.getBoundingClientRect();
+        if (rect) {
+            setIsDrawing(true);
+            setStartPos({
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top,
             });
         }
     };
 
-    // Handler für die Bewegung während des Drag & Drop
     const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-        if (!dragItem) return;
+        if (!isDrawing || !startPos || !canvasRef.current) return;
 
-        const canvas = canvasRef.current;
-        if (!canvas) return;
+        const rect = canvasRef.current.getBoundingClientRect();
+        const ctx = canvasRef.current.getContext("2d");
+        if (ctx) {
+            ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
 
-        const rect = canvas.getBoundingClientRect();
-        const x = (e.clientX - rect.left) / scale;
-        const y = (e.clientY - rect.top) / scale;
+            // Draw existing rectangles
+            rectangles.forEach(({ x, y, width, height }) => {
+                drawRectangleWithLabels(ctx, x, y, width, height);
+            });
 
-        if (dragItem.type === "flooring") {
-            const flooring = floorings.find(f => f.id === dragItem.id);
-            if (flooring && onFlooringPositionUpdate) {
-                const newX = Math.round(x - dragItem.offset[0]);
-                const newY = Math.round(y - dragItem.offset[1]);
-                onFlooringPositionUpdate(flooring, [newX, newY]);
-            }
+            // Draw rectangle being created
+            const currentPos = {
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top,
+            };
+
+            const width = currentPos.x - startPos.x;
+            const height = currentPos.y - startPos.y;
+
+            drawRectangleWithLabels(ctx, startPos.x, startPos.y, width, height);
         }
     };
 
-    // Handler für das Ende des Drag & Drop
-    const handleMouseUp = () => {
-        setDragItem(null);
+    const handleMouseUp = (e: React.MouseEvent<HTMLCanvasElement>) => {
+        if (!isDrawing || !startPos || !canvasRef.current) return;
+
+        const rect = canvasRef.current.getBoundingClientRect();
+        const endPos = {
+            x: e.clientX - rect.left,
+            y: e.clientY - rect.top,
+        };
+
+        const newRectangle: Rectangle = {
+            id: Date.now(),
+            x: startPos.x,
+            y: startPos.y,
+            width: endPos.x - startPos.x,
+            height: endPos.y - startPos.y,
+        };
+
+        setRectangles(prev => [...prev, newRectangle]);
+        setIsDrawing(false);
+        setStartPos(null);
+    };
+
+    const handleDeleteRectangle = (id: number) => {
+        setRectangles(prev => prev.filter(rect => rect.id !== id));
     };
 
     return (
-        <div className="relative">
-            {editable && (
-                <div className="flex flex-wrap gap-2 mb-4">
-                    <Button
-                        icon="pi pi-arrows-alt"
-                        className={`${currentTool === "move" ? "p-button-info" : "p-button-secondary"}`}
-                        onClick={() => setCurrentTool("move")}
-                        tooltip="Element verschieben"
-                    />
-                    <Button
-                        icon="pi pi-pencil"
-                        className={`${currentTool === "wall" ? "p-button-info" : "p-button-secondary"}`}
-                        onClick={() => setCurrentTool("wall")}
-                        tooltip="Wand zeichnen"
-                    />
-                    <Button
-                        icon="pi pi-sign-in"
-                        className={`${currentTool === "door" ? "p-button-info" : "p-button-secondary"}`}
-                        onClick={() => setCurrentTool("door")}
-                        tooltip="Tür platzieren"
-                    />
-                    <Button
-                        icon="pi pi-search"
-                        className={`${currentTool === "select" ? "p-button-info" : "p-button-secondary"}`}
-                        onClick={() => setCurrentTool("select")}
-                        tooltip="Element auswählen"
-                    />
-                </div>
-            )}
-
-            <canvas
-                ref={canvasRef}
-                width={800}
-                height={600}
-                className="border border-gray-300 bg-white"
-                onClick={handleCanvasClick}
-                onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
-                onMouseLeave={handleMouseUp}
-            />
-
-            <div className="mt-2 text-sm text-gray-500">
-                Aktuelles Werkzeug:{" "}
-                {currentTool === "move"
-                    ? "Verschieben"
-                    : currentTool === "wall"
-                      ? "Wand zeichnen"
-                      : currentTool === "door"
-                        ? "Tür platzieren"
-                        : "Element auswählen"}
+        <div style={{ display: "flex" }}>
+            <div>
+                <canvas
+                    ref={canvasRef}
+                    width={800}
+                    height={600}
+                    style={{ border: "1px solid black" }}
+                    onMouseDown={handleMouseDown}
+                    onMouseMove={handleMouseMove}
+                    onMouseUp={handleMouseUp}
+                />
+            </div>
+            <div style={{ marginLeft: "20px" }}>
+                <h3>Rectangles</h3>
+                <ul>
+                    {rectangles.map(rect => (
+                        <li key={rect.id}>
+                            Rectangle {rect.id} - {Math.abs(rect.width)}×{Math.abs(rect.height)}px
+                            <button onClick={() => handleDeleteRectangle(rect.id)}>
+                                <i className="pi pi-times" style={{ fontSize: "1.5rem" }}></i>
+                            </button>
+                        </li>
+                    ))}
+                </ul>
             </div>
         </div>
     );
-}
+};
+
+export default FloorplanCanvas;

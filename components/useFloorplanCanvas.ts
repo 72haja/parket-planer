@@ -35,6 +35,9 @@ export function useFloorplanCanvas({
     );
     const [flooringStartPos, setFlooringStartPos] = useState<{ x: number; y: number } | null>(null);
 
+    // Snap point state
+    const [snapPoint, setSnapPoint] = useState<{ x: number; y: number } | null>(null);
+
     // Dynamically set canvas size to match container using ResizeObserver
     useEffect(() => {
         let observer: ResizeObserver | null = null;
@@ -177,10 +180,23 @@ export function useFloorplanCanvas({
                     isHighlighted
                 );
             });
+            // Draw snap point if present
+            if (snapPoint) {
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(snapPoint.x, snapPoint.y, 6, 0, 2 * Math.PI);
+                ctx.fillStyle = "#f59e42";
+                ctx.strokeStyle = "#b45309";
+                ctx.lineWidth = 2;
+                ctx.shadowColor = "#fff";
+                ctx.shadowBlur = 2;
+                ctx.fill();
+                ctx.stroke();
+                ctx.restore();
+            }
             ctx.restore();
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [rectangles, zoom, pan, hoveredRectangleId, canvasDimensions, flooring]);
+    }, [rectangles, zoom, pan, hoveredRectangleId, flooring, snapPoint, drawFlooringPattern]);
 
     // Redraw on changes
     useEffect(() => {
@@ -244,6 +260,48 @@ export function useFloorplanCanvas({
             setPan(prevPan => ({ x: prevPan.x + dx, y: prevPan.y + dy }));
             setLastPanPos({ x: e.clientX, y: e.clientY });
             return;
+        }
+        // Snap point logic (snap to nearest point on any side, not just center)
+        const mousePos = screenToCanvasCoords(e.clientX, e.clientY, canvas);
+        let minDist = Infinity;
+        let nearest: { x: number; y: number } | null = null;
+        rectangles.forEach(rect => {
+            const corners = [
+                { x: rect.x, y: rect.y },
+                { x: rect.x + rect.width, y: rect.y },
+                { x: rect.x + rect.width, y: rect.y + rect.height },
+                { x: rect.x, y: rect.y + rect.height },
+            ];
+            // Sides: [top, right, bottom, left]
+            const sides = [
+                [corners[0], corners[1]], // top
+                [corners[1], corners[2]], // right
+                [corners[2], corners[3]], // bottom
+                [corners[3], corners[0]], // left
+            ];
+            sides.forEach(([a, b]) => {
+                if (!a || !b) return;
+                // Project mousePos onto segment ab
+                const abx = b.x - a.x;
+                const aby = b.y - a.y;
+                const apx = mousePos.x - a.x;
+                const apy = mousePos.y - a.y;
+                const abLenSq = abx * abx + aby * aby;
+                let t = abLenSq === 0 ? 0 : (apx * abx + apy * aby) / abLenSq;
+                t = Math.max(0, Math.min(1, t));
+                const proj = { x: a.x + t * abx, y: a.y + t * aby };
+                const dist = Math.hypot(proj.x - mousePos.x, proj.y - mousePos.y);
+                if (dist < minDist) {
+                    minDist = dist;
+                    nearest = proj;
+                }
+            });
+        });
+        // Only show snap dot if within 20px (canvas units)
+        if (nearest && minDist < 20) {
+            setSnapPoint(nearest);
+        } else {
+            setSnapPoint(null);
         }
         if (!isDrawing || !startPos) {
             return;
@@ -333,5 +391,6 @@ export function useFloorplanCanvas({
         setZoom,
         pan,
         setPan,
+        snapPoint,
     };
 }

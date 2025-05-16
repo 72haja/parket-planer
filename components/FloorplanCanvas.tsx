@@ -157,6 +157,10 @@ const FloorplanCanvas: FC<FloorplanCanvasProps> = ({ rectangles, setRectangles }
                             isPanning ? "cursor-move" : "cursor-crosshair",
                             fullscreen && "max-h-full max-w-full"
                         )}
+                        onMouseEnter={() => {
+                            const docElement = document.documentElement;
+                            docElement.style.overflow = "hidden";
+                        }}
                         onMouseDown={handleMouseDown}
                         onMouseMove={handleMouseMove}
                         onMouseUp={handleMouseUp}
@@ -164,8 +168,8 @@ const FloorplanCanvas: FC<FloorplanCanvasProps> = ({ rectangles, setRectangles }
                             if (isPanning) {
                                 setPan({ x: pan.x, y: pan.y });
                             }
-                            // No need to call setIsDrawing/setStartPos here, as these are now internal to the hook
-                            // The hook will handle cleanup/redraw as needed
+                            const docElement = document.documentElement;
+                            docElement.style.overflow = "";
                         }}
                         onWheel={handleWheel}
                     />

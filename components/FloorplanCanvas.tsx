@@ -1,96 +1,66 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { FC, useEffect, useState } from "react";
 import clsx from "clsx";
-import { v4 as uuid } from "uuid";
 import { Rectangle } from "@/lib/types";
+import InfoTooltipButton from "./InfoTooltipButton";
 import RectangleList from "./RectangleList";
+import { useFloorplanCanvas } from "./useFloorplanCanvas";
 
 interface FloorplanCanvasProps {
     rectangles: Rectangle[];
     setRectangles: (rectangles: Rectangle[]) => void;
 }
 
-const FloorplanCanvas: React.FC<FloorplanCanvasProps> = ({ rectangles, setRectangles }) => {
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    const canvasContainerRef = useRef<HTMLDivElement>(null);
-    const fullscreenContainerRef = useRef<HTMLDivElement>(null);
-    const [canvasDimensions, setCanvasDimensions] = useState({ width: 800, height: 600 });
-    const [isDrawing, setIsDrawing] = useState(false);
-    const [isPanning, setIsPanning] = useState(false);
-    const [startPos, setStartPos] = useState<{ x: number; y: number } | null>(null);
-    const [lastPanPos, setLastPanPos] = useState<{ x: number; y: number } | null>(null);
-    const [zoom, setZoom] = useState(1); // Zoom level, 1 = 100%
-    const [pan, setPan] = useState({ x: 0, y: 0 }); // For panning implementation
-    const [hoveredRectangleId, setHoveredRectangleId] = useState<string | null>(null);
+const FloorplanCanvas: FC<FloorplanCanvasProps> = ({ rectangles, setRectangles }) => {
     const [fullscreen, setFullscreen] = useState(false);
     const [showControlsTooltip, setShowControlsTooltip] = useState(false);
 
-    // Dynamically set canvas size to match container
-    useEffect(() => {
-        function updateCanvasSize() {
-            let container: HTMLDivElement | null = null;
-            let width = 800;
-            let height = 600;
-            if (fullscreen && fullscreenContainerRef.current) {
-                // In fullscreen, subtract sidebar and paddings
-                container = fullscreenContainerRef.current;
-                const rect = container.getBoundingClientRect();
-                // Sidebar is md:w-96 (384px), padding is md:p-8 (32px each side)
-                const sidebarWidth = 384; // px
-                const padding = 32 * 2; // left + right
-                width = Math.floor(rect.width - sidebarWidth - padding);
-                height = Math.floor(rect.height - padding); // top + bottom
-            } else if (canvasContainerRef.current) {
-                container = canvasContainerRef.current;
-                const rect = container.getBoundingClientRect();
-                width = Math.floor(rect.width);
-                height = Math.floor(rect.height);
-            }
-            setCanvasDimensions({ width: Math.max(width, 200), height: Math.max(height, 200) });
-        }
-        updateCanvasSize();
-        window.addEventListener("resize", updateCanvasSize);
-        return () => window.removeEventListener("resize", updateCanvasSize);
-    }, [fullscreen]);
+    const {
+        canvasRef,
+        canvasContainerRef,
+        fullscreenContainerRef,
+        canvasDimensions,
+        isPanning,
+        hoveredRectangleId,
+        setHoveredRectangleId,
+        handleMouseDown,
+        handleMouseMove,
+        handleMouseUp,
+        handleWheel,
+        zoom,
+        setZoom,
+        pan,
+        setPan,
+    } = useFloorplanCanvas({ rectangles, setRectangles, fullscreen });
 
-    // Handle keyboard shortcuts and key states
+    // Keyboard shortcuts and scroll lock remain in the component
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            // Handle Escape key for fullscreen
             if (e.key === "Escape" && fullscreen) {
                 setFullscreen(false);
                 return;
             }
-
-            // Handle Cmd+Z (Mac) or Ctrl+Z (Windows/Linux) to undo last rectangle
             if ((e.key === "z" || e.key === "Z") && (e.metaKey || e.ctrlKey)) {
                 e.preventDefault();
-                // Remove the last added rectangle
                 if (rectangles.length > 0) {
                     const newRectangles = [...rectangles];
-                    newRectangles.pop(); // Remove the last element
+                    newRectangles.pop();
                     setRectangles(newRectangles);
                 }
             }
         };
-
-        // Handle Alt/Option key release
         const handleKeyUp = (e: KeyboardEvent) => {
             if (e.key === "Alt" && isPanning) {
-                setIsPanning(false);
-                setLastPanPos(null);
+                setPan({ x: pan.x, y: pan.y });
             }
         };
-
         window.addEventListener("keydown", handleKeyDown);
         window.addEventListener("keyup", handleKeyUp);
-
         return () => {
             window.removeEventListener("keydown", handleKeyDown);
             window.removeEventListener("keyup", handleKeyUp);
         };
-    }, [fullscreen, rectangles, setRectangles, isPanning]);
+    }, [fullscreen, rectangles, setRectangles, isPanning, setPan, pan.x, pan.y]);
 
-    // Scroll lock when fullscreen
     useEffect(() => {
         if (fullscreen) {
             document.body.style.overflow = "hidden";
@@ -102,241 +72,6 @@ const FloorplanCanvas: React.FC<FloorplanCanvasProps> = ({ rectangles, setRectan
         };
     }, [fullscreen]);
 
-    // Helper function to draw a rectangle with consistent label placement
-    const drawRectangleWithLabels = (
-        ctx: CanvasRenderingContext2D,
-        x: number,
-        y: number,
-        width: number,
-        height: number,
-        isHighlighted: boolean = false
-    ) => {
-        // Calculate normalized coordinates for drawing
-        const normalizedX = width < 0 ? x + width : x;
-        const normalizedY = height < 0 ? y + height : y;
-        const normalizedWidth = Math.abs(width);
-        const normalizedHeight = Math.abs(height);
-
-        // Draw rectangle
-        if (isHighlighted) {
-            ctx.strokeStyle = "#3b82f6"; // Blue highlight color
-            ctx.lineWidth = 2;
-
-            // Draw a semi-transparent fill for the highlighted rectangle
-            ctx.fillStyle = "rgba(59, 130, 246, 0.1)";
-            ctx.fillRect(x, y, width, height);
-        } else {
-            ctx.strokeStyle = "black";
-            ctx.lineWidth = 1;
-        }
-
-        ctx.strokeRect(x, y, width, height);
-
-        // Draw width text at top of rectangle
-        ctx.font = "12px Arial";
-        ctx.fillStyle = isHighlighted ? "#3b82f6" : "black";
-        ctx.textAlign = "center";
-        ctx.fillText(
-            `${normalizedWidth.toFixed(0)}px`,
-            normalizedX + normalizedWidth / 2,
-            normalizedY - 5
-        );
-
-        // Draw height text to the left of rectangle
-        ctx.save();
-        ctx.translate(normalizedX - 5, normalizedY + normalizedHeight / 2);
-        ctx.rotate(-Math.PI / 2);
-        ctx.textAlign = "center";
-        ctx.fillText(`${normalizedHeight.toFixed(0)}px`, 0, 0);
-        ctx.restore();
-
-        // Reset line width
-        ctx.lineWidth = 1;
-    };
-
-    // Function to redraw the canvas with current zoom level
-    const redrawCanvas = useCallback(() => {
-        if (!canvasRef.current) return;
-
-        const canvas = canvasRef.current;
-        const ctx = canvas.getContext("2d");
-
-        if (ctx) {
-            // Clear the canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Save context state
-            ctx.save();
-
-            // Apply zoom transformation (from center)
-            ctx.translate(pan.x, pan.y);
-            ctx.scale(zoom, zoom);
-
-            // Draw all rectangles with the current zoom level
-            rectangles.forEach(rect => {
-                const isHighlighted = rect.id === hoveredRectangleId;
-                drawRectangleWithLabels(
-                    ctx,
-                    rect.x,
-                    rect.y,
-                    rect.width,
-                    rect.height,
-                    isHighlighted
-                );
-            });
-
-            // Restore context to original state
-            ctx.restore();
-        }
-    }, [rectangles, zoom, pan, hoveredRectangleId]);
-
-    // Handle zooming with mouse wheel
-    const handleWheel = (e: React.WheelEvent<HTMLCanvasElement>) => {
-        e.preventDefault();
-
-        if (!canvasRef.current) return;
-        const canvas = canvasRef.current;
-
-        // Get the mouse position relative to the canvas
-        const rect = canvas.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
-
-        // Convert mouse position to world coordinates before zoom
-        const worldX = ((mouseX * canvas.width) / rect.width - pan.x) / zoom;
-        const worldY = ((mouseY * canvas.height) / rect.height - pan.y) / zoom;
-
-        // Calculate zoom delta based on wheel direction
-        const delta = -e.deltaY * 0.001; // Adjust sensitivity as needed
-        const newZoom = Math.max(0.1, Math.min(5, zoom + delta)); // Limit zoom between 10% and 500%
-
-        // Calculate new pan position to zoom at the mouse position
-        const newPanX = -worldX * newZoom + (mouseX * canvas.width) / rect.width;
-        const newPanY = -worldY * newZoom + (mouseY * canvas.height) / rect.height;
-
-        setZoom(newZoom);
-        setPan({ x: newPanX, y: newPanY });
-    };
-
-    // Redraw canvas whenever rectangles array, zoom, pan or hoveredRectangleId changes
-    useEffect(() => {
-        redrawCanvas();
-    }, [redrawCanvas]);
-
-    // Convert screen coordinates to canvas coordinates considering zoom
-    const screenToCanvasCoords = (clientX: number, clientY: number, canvas: HTMLCanvasElement) => {
-        const rect = canvas.getBoundingClientRect();
-
-        // Calculate scaling factor between canvas display size and internal size
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
-
-        // Calculate coordinates in canvas space
-        const x = ((clientX - rect.left) * scaleX - pan.x) / zoom;
-        const y = ((clientY - rect.top) * scaleY - pan.y) / zoom;
-
-        return { x, y };
-    };
-
-    const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-
-        // Check if Option/Alt key is pressed for panning
-        if (e.altKey) {
-            setIsPanning(true);
-            setLastPanPos({ x: e.clientX, y: e.clientY });
-            return;
-        }
-
-        // Regular drawing behavior
-        const position = screenToCanvasCoords(e.clientX, e.clientY, canvas);
-        setIsDrawing(true);
-        setStartPos(position);
-    };
-
-    const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-
-        // Handle panning
-        if (isPanning && lastPanPos) {
-            const dx = e.clientX - lastPanPos.x;
-            const dy = e.clientY - lastPanPos.y;
-
-            setPan(prevPan => ({
-                x: prevPan.x + dx,
-                y: prevPan.y + dy,
-            }));
-
-            setLastPanPos({ x: e.clientX, y: e.clientY });
-            return;
-        }
-
-        // Handle drawing
-        if (!isDrawing || !startPos) return;
-
-        const currentPos = screenToCanvasCoords(e.clientX, e.clientY, canvas);
-        const ctx = canvas.getContext("2d");
-
-        if (ctx) {
-            // Redraw the canvas
-            redrawCanvas();
-
-            // Draw the rectangle being currently created
-            ctx.save();
-            ctx.translate(pan.x, pan.y);
-            ctx.scale(zoom, zoom);
-
-            const width = currentPos.x - startPos.x;
-            const height = currentPos.y - startPos.y;
-
-            drawRectangleWithLabels(ctx, startPos.x, startPos.y, width, height);
-            ctx.restore();
-        }
-    };
-
-    const handleMouseUp = (e: React.MouseEvent<HTMLCanvasElement>) => {
-        // Handle end of panning
-        if (isPanning) {
-            setIsPanning(false);
-            setLastPanPos(null);
-            return;
-        }
-
-        // Handle end of drawing
-        if (!isDrawing || !startPos || !canvasRef.current) return;
-
-        const canvas = canvasRef.current;
-        const endPos = screenToCanvasCoords(e.clientX, e.clientY, canvas);
-
-        const width = endPos.x - startPos.x;
-        const height = endPos.y - startPos.y;
-
-        // Only add rectangle if width and height are both greater than 0
-        if (Math.abs(width) > 0 && Math.abs(height) > 0) {
-            const newRectangle: Rectangle = {
-                id: uuid(),
-                x: startPos.x,
-                y: startPos.y,
-                width,
-                height,
-            };
-            const newRectangles = [...rectangles, newRectangle];
-            setRectangles(newRectangles);
-        } else {
-            redrawCanvas();
-        }
-        setIsDrawing(false);
-        setStartPos(null);
-    };
-
-    const handleDeleteRectangle = (id: string) => {
-        const newRectangles = rectangles.filter(rect => rect.id !== id);
-        setRectangles(newRectangles);
-    };
-
-    // Function to reset zoom
     const resetZoom = () => {
         setZoom(1);
         setPan({ x: 0, y: 0 });
@@ -358,48 +93,10 @@ const FloorplanCanvas: React.FC<FloorplanCanvasProps> = ({ rectangles, setRectan
                         className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm transition-colors mr-2">
                         Reset View
                     </button>
-                    <div className="relative inline-block">
-                        <button
-                            onMouseEnter={() => setShowControlsTooltip(true)}
-                            onMouseLeave={() => setShowControlsTooltip(false)}
-                            className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-700"
-                            aria-label="Canvas controls information">
-                            {/* Improved info icon SVG */}
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                className="h-4 w-4">
-                                <circle cx="12" cy="12" r="10" />
-                                <line x1="12" y1="16" x2="12" y2="12" />
-                                <circle cx="12" cy="8.5" r="1" />
-                            </svg>
-                        </button>
-                        {showControlsTooltip && (
-                            <div className="absolute left-0 bottom-full mb-2 p-3 w-64 bg-white rounded shadow-lg z-10 text-xs">
-                                <h3 className="font-semibold text-sm mb-1">Canvas Controls:</h3>
-                                <ul className="space-y-1">
-                                    <li>
-                                        <span className="font-medium">Draw:</span> Click and drag
-                                    </li>
-                                    <li>
-                                        <span className="font-medium">Pan:</span> Hold Option/Alt +
-                                        drag
-                                    </li>
-                                    <li>
-                                        <span className="font-medium">Zoom:</span> Mouse wheel
-                                    </li>
-                                    <li>
-                                        <span className="font-medium">Undo:</span> Cmd+Z / Ctrl+Z
-                                    </li>
-                                </ul>
-                            </div>
-                        )}
-                    </div>
+                    <InfoTooltipButton
+                        show={showControlsTooltip}
+                        setShow={setShowControlsTooltip}
+                    />
                 </div>
                 <button
                     onClick={() => setFullscreen(f => !f)}
@@ -464,16 +161,11 @@ const FloorplanCanvas: React.FC<FloorplanCanvasProps> = ({ rectangles, setRectan
                         onMouseMove={handleMouseMove}
                         onMouseUp={handleMouseUp}
                         onMouseLeave={() => {
-                            // Clean up if mouse leaves the canvas
                             if (isPanning) {
-                                setIsPanning(false);
-                                setLastPanPos(null);
+                                setPan({ x: pan.x, y: pan.y });
                             }
-                            if (isDrawing) {
-                                setIsDrawing(false);
-                                setStartPos(null);
-                                redrawCanvas();
-                            }
+                            // No need to call setIsDrawing/setStartPos here, as these are now internal to the hook
+                            // The hook will handle cleanup/redraw as needed
                         }}
                         onWheel={handleWheel}
                     />
@@ -481,7 +173,10 @@ const FloorplanCanvas: React.FC<FloorplanCanvasProps> = ({ rectangles, setRectan
                 <div className={fullscreen ? "w-full md:w-96 max-w-xs" : "w-full md:w-72"}>
                     <RectangleList
                         rectangles={rectangles}
-                        onDeleteRectangle={handleDeleteRectangle}
+                        onDeleteRectangle={id => {
+                            const newRectangles = rectangles.filter(rect => rect.id !== id);
+                            setRectangles(newRectangles);
+                        }}
                         setHoveredRectangleId={setHoveredRectangleId}
                         hoveredRectangleId={hoveredRectangleId}
                     />

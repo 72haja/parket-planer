@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "primereact/button";
@@ -31,7 +31,7 @@ export default function Login() {
         }
     }, [searchParams]);
 
-    const handleLogin = async (e: React.FormEvent) => {
+    const handleLogin = async (e: FormEvent) => {
         e.preventDefault();
 
         if (!email || !password) {

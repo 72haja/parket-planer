@@ -1,4 +1,4 @@
-import React from "react";
+import React, { FC } from "react";
 import { Rectangle } from "@/lib/types";
 
 interface RectangleListProps {
@@ -8,7 +8,7 @@ interface RectangleListProps {
     hoveredRectangleId: string | null;
 }
 
-const RectangleList: React.FC<RectangleListProps> = ({
+const RectangleList: FC<RectangleListProps> = ({
     rectangles,
     onDeleteRectangle,
     setHoveredRectangleId,

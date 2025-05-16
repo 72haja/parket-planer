@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { FormEvent, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "primereact/button";
@@ -18,7 +18,7 @@ export default function Register() {
     const toast = useRef<Toast>(null);
     const router = useRouter();
 
-    const handleRegister = async (e: React.FormEvent) => {
+    const handleRegister = async (e: FormEvent) => {
         e.preventDefault();
 
         if (!email || !password) {

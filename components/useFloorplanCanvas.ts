@@ -1,0 +1,242 @@
+import { MouseEvent, WheelEvent, useCallback, useEffect, useRef, useState } from "react";
+import { v4 as uuid } from "uuid";
+import { Rectangle } from "@/lib/types";
+
+interface UseFloorplanCanvasProps {
+    rectangles: Rectangle[];
+    setRectangles: (rectangles: Rectangle[]) => void;
+    fullscreen: boolean;
+}
+
+export function useFloorplanCanvas({
+    rectangles,
+    setRectangles,
+    fullscreen,
+}: UseFloorplanCanvasProps) {
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const canvasContainerRef = useRef<HTMLDivElement>(null);
+    const fullscreenContainerRef = useRef<HTMLDivElement>(null);
+    const [canvasDimensions, setCanvasDimensions] = useState({ width: 800, height: 600 });
+    const [isDrawing, setIsDrawing] = useState(false);
+    const [isPanning, setIsPanning] = useState(false);
+    const [startPos, setStartPos] = useState<{ x: number; y: number } | null>(null);
+    const [lastPanPos, setLastPanPos] = useState<{ x: number; y: number } | null>(null);
+    const [zoom, setZoom] = useState(1);
+    const [pan, setPan] = useState({ x: 0, y: 0 });
+    const [hoveredRectangleId, setHoveredRectangleId] = useState<string | null>(null);
+
+    // Dynamically set canvas size to match container
+    useEffect(() => {
+        function updateCanvasSize() {
+            let container: HTMLDivElement | null = null;
+            let width = 800;
+            let height = 600;
+            if (fullscreen && fullscreenContainerRef.current) {
+                container = fullscreenContainerRef.current;
+                const rect = container.getBoundingClientRect();
+                const sidebarWidth = 384;
+                const padding = 32 * 2;
+                width = Math.floor(rect.width - sidebarWidth - padding);
+                height = Math.floor(rect.height - padding);
+            } else if (canvasContainerRef.current) {
+                container = canvasContainerRef.current;
+                const rect = container.getBoundingClientRect();
+                width = Math.floor(rect.width);
+                height = Math.floor(rect.height);
+            }
+            setCanvasDimensions({ width: Math.max(width, 200), height: Math.max(height, 200) });
+        }
+        updateCanvasSize();
+        window.addEventListener("resize", updateCanvasSize);
+        return () => window.removeEventListener("resize", updateCanvasSize);
+    }, [fullscreen]);
+
+    // Helper function to draw a rectangle with consistent label placement
+    const drawRectangleWithLabels = (
+        ctx: CanvasRenderingContext2D,
+        x: number,
+        y: number,
+        width: number,
+        height: number,
+        isHighlighted: boolean = false
+    ) => {
+        const normalizedX = width < 0 ? x + width : x;
+        const normalizedY = height < 0 ? y + height : y;
+        const normalizedWidth = Math.abs(width);
+        const normalizedHeight = Math.abs(height);
+        if (isHighlighted) {
+            ctx.strokeStyle = "#3b82f6";
+            ctx.lineWidth = 2;
+            ctx.fillStyle = "rgba(59, 130, 246, 0.1)";
+            ctx.fillRect(x, y, width, height);
+        } else {
+            ctx.strokeStyle = "black";
+            ctx.lineWidth = 1;
+        }
+        ctx.strokeRect(x, y, width, height);
+        ctx.font = "12px Arial";
+        ctx.fillStyle = isHighlighted ? "#3b82f6" : "black";
+        ctx.textAlign = "center";
+        ctx.fillText(
+            `${normalizedWidth.toFixed(0)}px`,
+            normalizedX + normalizedWidth / 2,
+            normalizedY - 5
+        );
+        ctx.save();
+        ctx.translate(normalizedX - 5, normalizedY + normalizedHeight / 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.textAlign = "center";
+        ctx.fillText(`${normalizedHeight.toFixed(0)}px`, 0, 0);
+        ctx.restore();
+        ctx.lineWidth = 1;
+    };
+
+    // Redraw the canvas
+    const redrawCanvas = useCallback(() => {
+        if (!canvasRef.current) {
+            return;
+        }
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.save();
+            ctx.translate(pan.x, pan.y);
+            ctx.scale(zoom, zoom);
+            rectangles.forEach(rect => {
+                const isHighlighted = rect.id === hoveredRectangleId;
+                drawRectangleWithLabels(
+                    ctx,
+                    rect.x,
+                    rect.y,
+                    rect.width,
+                    rect.height,
+                    isHighlighted
+                );
+            });
+            ctx.restore();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [rectangles, zoom, pan, hoveredRectangleId, canvasDimensions]);
+
+    // Redraw on changes
+    useEffect(() => {
+        redrawCanvas();
+    }, [redrawCanvas, canvasDimensions]);
+
+    // Convert screen coordinates to canvas coordinates considering zoom
+    const screenToCanvasCoords = (clientX: number, clientY: number, canvas: HTMLCanvasElement) => {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const x = ((clientX - rect.left) * scaleX - pan.x) / zoom;
+        const y = ((clientY - rect.top) * scaleY - pan.y) / zoom;
+        return { x, y };
+    };
+
+    // Mouse event handlers
+    const handleMouseDown = (e: MouseEvent<HTMLCanvasElement>) => {
+        const canvas = canvasRef.current;
+        if (!canvas) {
+            return;
+        }
+        if (e.altKey) {
+            setIsPanning(true);
+            setLastPanPos({ x: e.clientX, y: e.clientY });
+            return;
+        }
+        const position = screenToCanvasCoords(e.clientX, e.clientY, canvas);
+        setIsDrawing(true);
+        setStartPos(position);
+    };
+
+    const handleMouseMove = (e: MouseEvent<HTMLCanvasElement>) => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        if (isPanning && lastPanPos) {
+            const dx = e.clientX - lastPanPos.x;
+            const dy = e.clientY - lastPanPos.y;
+            setPan(prevPan => ({ x: prevPan.x + dx, y: prevPan.y + dy }));
+            setLastPanPos({ x: e.clientX, y: e.clientY });
+            return;
+        }
+        if (!isDrawing || !startPos) return;
+        const currentPos = screenToCanvasCoords(e.clientX, e.clientY, canvas);
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+            redrawCanvas();
+            ctx.save();
+            ctx.translate(pan.x, pan.y);
+            ctx.scale(zoom, zoom);
+            const width = currentPos.x - startPos.x;
+            const height = currentPos.y - startPos.y;
+            drawRectangleWithLabels(ctx, startPos.x, startPos.y, width, height);
+            ctx.restore();
+        }
+    };
+
+    const handleMouseUp = (e: MouseEvent<HTMLCanvasElement>) => {
+        if (isPanning) {
+            setIsPanning(false);
+            setLastPanPos(null);
+            return;
+        }
+        if (!isDrawing || !startPos || !canvasRef.current) return;
+        const canvas = canvasRef.current;
+        const endPos = screenToCanvasCoords(e.clientX, e.clientY, canvas);
+        const width = endPos.x - startPos.x;
+        const height = endPos.y - startPos.y;
+        if (Math.abs(width) > 0 && Math.abs(height) > 0) {
+            const newRectangle: Rectangle = {
+                id: uuid(),
+                x: startPos.x,
+                y: startPos.y,
+                width,
+                height,
+            };
+            const newRectangles = [...rectangles, newRectangle];
+            setRectangles(newRectangles);
+        } else {
+            redrawCanvas();
+        }
+        setIsDrawing(false);
+        setStartPos(null);
+    };
+
+    const handleWheel = (e: WheelEvent<HTMLCanvasElement>) => {
+        if (!canvasRef.current) {
+            return;
+        }
+        const canvas = canvasRef.current;
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+        const worldX = ((mouseX * canvas.width) / rect.width - pan.x) / zoom;
+        const worldY = ((mouseY * canvas.height) / rect.height - pan.y) / zoom;
+        const delta = -e.deltaY * 0.001;
+        const newZoom = Math.max(0.1, Math.min(5, zoom + delta));
+        const newPanX = -worldX * newZoom + (mouseX * canvas.width) / rect.width;
+        const newPanY = -worldY * newZoom + (mouseY * canvas.height) / rect.height;
+        setZoom(newZoom);
+        setPan({ x: newPanX, y: newPanY });
+    };
+
+    return {
+        canvasRef,
+        canvasContainerRef,
+        fullscreenContainerRef,
+        canvasDimensions,
+        isDrawing,
+        isPanning,
+        hoveredRectangleId,
+        setHoveredRectangleId,
+        handleMouseDown,
+        handleMouseMove,
+        handleMouseUp,
+        handleWheel,
+        zoom,
+        setZoom,
+        pan,
+        setPan,
+    };
+}

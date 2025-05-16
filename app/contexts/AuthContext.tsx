@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { FC, ReactNode, createContext, useContext, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Session, User } from "@supabase/supabase-js";
@@ -27,14 +27,14 @@ export const useAuth = () => {
 
 // Definiere die Props für den AuthProvider
 interface AuthProviderProps {
-    children: React.ReactNode;
+    children: ReactNode;
 }
 
 // Liste der Pfade, die ohne Authentifizierung zugänglich sind
 const publicPaths = ["/", "/auth/login", "/auth/register", "/auth/callback"];
 
 // Auth-Provider-Komponente
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
     const [session, setSession] = useState<Session | null>(null);
     const [loading, setLoading] = useState(true);

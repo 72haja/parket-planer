@@ -105,7 +105,9 @@ export default function ProjectPage() {
             return;
         }
 
-        if (!project) return;
+        if (!project) {
+            return;
+        }
 
         try {
             setSaving(true);
@@ -137,7 +139,9 @@ export default function ProjectPage() {
 
     // Handler für Aktualisierung eines Stockwerks
     const handleFloorUpdate = (updatedFloor: Floor) => {
-        if (!project) return;
+        if (!project) {
+            return;
+        }
 
         const updatedFloors = project.data.floors.map(floor =>
             floor.id === updatedFloor.id ? updatedFloor : floor
@@ -151,7 +155,9 @@ export default function ProjectPage() {
 
     // Neuer Handler für das Hinzufügen eines neuen Stockwerks
     const handleAddFloor = (floor: Floor) => {
-        if (!project) return;
+        if (!project) {
+            return;
+        }
 
         saveProject({
             ...project.data,
@@ -163,11 +169,15 @@ export default function ProjectPage() {
 
     // Neuer Handler für das Löschen eines Stockwerks
     const handleDeleteFloor = (floorId: string) => {
-        if (!project) return;
+        if (!project) {
+            return;
+        }
 
         // Index des zu löschenden Stockwerks finden
         const floorIndex = project.data.floors.findIndex(floor => floor.id === floorId);
-        if (floorIndex === -1) return;
+        if (floorIndex === -1) {
+            return;
+        }
 
         // Stockwerk löschen
         const newFloors = project.data.floors.filter(floor => floor.id !== floorId);
@@ -193,7 +203,9 @@ export default function ProjectPage() {
 
     // Neuer Handler für Stockwerk-Auswahl
     const handleSelectFloor = (index: number) => {
-        if (!project || project.data.selectedFloor === index) return;
+        if (!project || project.data.selectedFloor === index) {
+            return;
+        }
 
         saveProject({
             ...project.data,
@@ -203,7 +215,9 @@ export default function ProjectPage() {
 
     // Handler für das Hinzufügen eines neuen Bodenbelags
     const handleAddFlooring = (flooring: Omit<Flooring, "id">) => {
-        if (!project) return;
+        if (!project) {
+            return;
+        }
 
         const newFlooring: Flooring = {
             ...flooring,
@@ -221,7 +235,9 @@ export default function ProjectPage() {
 
     // Handler für das Löschen eines Bodenbelags
     const handleDeleteFlooring = (flooringId: string) => {
-        if (!project) return;
+        if (!project) {
+            return;
+        }
 
         saveProject({
             ...project.data,
@@ -231,6 +247,21 @@ export default function ProjectPage() {
         if (selectedFlooringId === flooringId) {
             setSelectedFlooringId(null);
         }
+    };
+
+    const handleUpdateFlooring = (flooring: Flooring) => {
+        if (!project) {
+            return;
+        }
+
+        const updatedFloorings = project.data.floorings.map(f =>
+            f.id === flooring.id ? flooring : f
+        );
+
+        saveProject({
+            ...project.data,
+            floorings: updatedFloorings,
+        });
     };
 
     // Zeige Ladeanzeige während Projekt geladen wird
@@ -329,6 +360,7 @@ export default function ProjectPage() {
                         handleDeleteFlooring={handleDeleteFlooring}
                         optimisticFloorings={optimisticFloorings}
                         setOptimisticFloorings={setOptimisticFloorings}
+                        handleUpdateFlooring={handleUpdateFlooring}
                     />
                 </div>
 

@@ -1,4 +1,4 @@
-import React, { FC, useState } from "react";
+import React, { FC, useEffect, useState } from "react";
 import clsx from "clsx";
 import { Button } from "primereact/button";
 import { Card } from "primereact/card";
@@ -16,6 +16,7 @@ interface FlooringSectionProps {
     handleAddFlooring: (flooring: Omit<Flooring, "id">) => void;
     optimisticFloorings: Flooring[];
     setOptimisticFloorings: React.Dispatch<React.SetStateAction<Flooring[]>>;
+    handleUpdateFlooring: (flooring: Flooring) => void;
 }
 
 const FlooringSection: FC<FlooringSectionProps> = ({
@@ -27,12 +28,22 @@ const FlooringSection: FC<FlooringSectionProps> = ({
     handleAddFlooring,
     optimisticFloorings,
     setOptimisticFloorings,
+    handleUpdateFlooring,
 }) => {
     const [isCreating, setIsCreating] = useState(false);
+    const [editingFlooringId, setEditingFlooringId] = useState<string | null>(null);
+    const [originFlooring, setOriginFlooring] = useState<Flooring | null>(null);
+
+    useEffect(() => {
+        setOriginFlooring(currentFloorFloorings.find(f => f.id === editingFlooringId) || null);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [editingFlooringId]);
 
     // Add optimistic flooring when creating a new one
     const handleStartCreate = () => {
-        if (!currentFloor) return;
+        if (!currentFloor) {
+            return;
+        }
         setIsCreating(true);
         const tempId = "optimistic-" + uuid();
         const newFlooring: Flooring = {
@@ -49,6 +60,12 @@ const FlooringSection: FC<FlooringSectionProps> = ({
     };
 
     const handleFlooringChanged = (flooring: Flooring) => {
+        const flooringDoesAlreadyExist = currentFloorFloorings.some(f => f.id === flooring.id);
+        if (flooringDoesAlreadyExist) {
+            handleUpdateFlooring(flooring);
+            return;
+        }
+
         setOptimisticFloorings(floorings =>
             floorings.map(f => (f.id === flooring.id ? flooring : f))
         );
@@ -80,6 +97,7 @@ const FlooringSection: FC<FlooringSectionProps> = ({
                         if (isCreating) {
                             handleCancelCreate();
                         }
+                        setEditingFlooringId(null);
                     }}>
                     <TabPanel header="Liste">
                         {allFloorings.length === 0 ? (
@@ -108,17 +126,56 @@ const FlooringSection: FC<FlooringSectionProps> = ({
                                                 {flooring.tileWidth}×{flooring.tileHeight} cm
                                             </div>
                                         </div>
-                                        <Button
-                                            icon="pi pi-trash"
-                                            className="p-button-rounded p-button-danger p-button-sm"
-                                            onClick={e => {
-                                                e.stopPropagation();
-                                                handleDeleteFlooring(flooring.id);
-                                            }}
-                                        />
+                                        <div className="flex gap-2">
+                                            <Button
+                                                icon="pi pi-pencil"
+                                                className="p-button-rounded p-button-sm p-button-outlined"
+                                                onClick={e => {
+                                                    e.stopPropagation();
+                                                    setEditingFlooringId(flooring.id);
+                                                }}
+                                            />
+                                            <Button
+                                                icon="pi pi-trash"
+                                                className="p-button-rounded p-button-danger p-button-sm"
+                                                onClick={e => {
+                                                    e.stopPropagation();
+                                                    handleDeleteFlooring(flooring.id);
+                                                }}
+                                            />
+                                        </div>
                                     </li>
                                 ))}
                             </ul>
+                        )}
+                        {/* Edit dialog below the list */}
+                        {editingFlooringId && (
+                            <div className="mt-4">
+                                <FlooringConfigurator
+                                    floorId={currentFloor?.id || ""}
+                                    onSave={flooring => {
+                                        handleFlooringChanged({
+                                            ...flooring,
+                                            id: editingFlooringId || "",
+                                        });
+                                        setEditingFlooringId(null);
+                                    }}
+                                    existingFlooring={allFloorings.find(
+                                        f => f.id === editingFlooringId
+                                    )}
+                                    setSelectedFlooringId={setSelectedFlooringId}
+                                    onCancel={() => {
+                                        if (originFlooring) {
+                                            handleUpdateFlooring({
+                                                ...originFlooring,
+                                                id: editingFlooringId || "",
+                                            });
+                                        }
+                                        setEditingFlooringId(null);
+                                    }}
+                                    handleFlooringChanged={handleFlooringChanged}
+                                />
+                            </div>
                         )}
                     </TabPanel>
                     <TabPanel header="Neu">

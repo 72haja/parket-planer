@@ -36,7 +36,9 @@ export default function Floors({
 
     // Handle updating a floor name
     const handleUpdateName = (floor: Floor) => {
-        if (editedName.trim() === "") return;
+        if (editedName.trim() === "") {
+            return;
+        }
 
         onUpdateFloor({
             ...floor,
@@ -58,7 +60,9 @@ export default function Floors({
 
     // Add a new floor
     const handleAddFloor = () => {
-        if (newFloorName.trim() === "") return;
+        if (newFloorName.trim() === "") {
+            return;
+        }
 
         const newFloor: Floor = {
             id: uuid(),

@@ -88,7 +88,9 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
 
     // Überprüfe Zugriffsberechtigung für geschützte Routen
     useEffect(() => {
-        if (loading) return;
+        if (loading) {
+            return;
+        }
 
         if (!user && !publicPaths.some(path => pathname.startsWith(path))) {
             router.push("/auth/login");

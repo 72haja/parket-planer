@@ -226,7 +226,9 @@ export function useFloorplanCanvas({
 
     const handleMouseMove = (e: MouseEvent<HTMLCanvasElement>) => {
         const canvas = canvasRef.current;
-        if (!canvas) return;
+        if (!canvas) {
+            return;
+        }
         if (isDraggingFlooring && flooring && flooringDragStart && flooringStartPos) {
             // Calculate delta in canvas coordinates
             const deltaX = (e.clientX - flooringDragStart.x) / zoom;
@@ -243,7 +245,9 @@ export function useFloorplanCanvas({
             setLastPanPos({ x: e.clientX, y: e.clientY });
             return;
         }
-        if (!isDrawing || !startPos) return;
+        if (!isDrawing || !startPos) {
+            return;
+        }
         const currentPos = screenToCanvasCoords(e.clientX, e.clientY, canvas);
         const ctx = canvas.getContext("2d");
         if (ctx) {
@@ -270,7 +274,9 @@ export function useFloorplanCanvas({
             setLastPanPos(null);
             return;
         }
-        if (!isDrawing || !startPos || !canvasRef.current) return;
+        if (!isDrawing || !startPos || !canvasRef.current) {
+            return;
+        }
         const canvas = canvasRef.current;
         const endPos = screenToCanvasCoords(e.clientX, e.clientY, canvas);
         const width = endPos.x - startPos.x;

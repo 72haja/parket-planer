@@ -1,17 +1,22 @@
 "use client";
 
-import React, { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "primereact/button";
 import { Dropdown } from "primereact/dropdown";
 import { InputNumber } from "primereact/inputnumber";
 import { InputText } from "primereact/inputtext";
 import { Panel } from "primereact/panel";
+import { Slider } from "primereact/slider";
 import type { Flooring } from "@/lib/supabase";
+import { isEqual } from "@/lib/utils";
 
 interface FlooringConfiguratorProps {
     floorId: string;
     onSave: (flooring: Omit<Flooring, "id">) => void;
     existingFlooring?: Flooring;
+    setSelectedFlooringId?: (id: string | null) => void;
+    onCancel?: () => void;
+    handleFlooringChanged?: (flooring: Flooring) => void;
 }
 
 interface OptionType {
@@ -24,7 +29,7 @@ const offsetOptions: OptionType[] = [
     { label: "1/2 Versatz", value: 0.5 },
     { label: "1/3 Versatz", value: 0.33 },
     { label: "1/4 Versatz", value: 0.25 },
-    { label: "Zufälliger Versatz", value: -1 },
+    { label: "benutzerdefinierter Versatz", value: -1 },
 ];
 
 function OffsetSelector({
@@ -49,18 +54,19 @@ function OffsetSelector({
                 placeholder="Versatz wählen"
             />
             {selectedOffset === -1 && (
-                <InputNumber
-                    value={customOffset ?? undefined}
-                    onValueChange={e => setCustomOffset(e.value ?? null)}
-                    min={0}
-                    max={1}
-                    step={0.01}
-                    mode="decimal"
-                    showButtons
-                    buttonLayout="horizontal"
-                    className="w-full"
-                    placeholder="Eigener Versatz (0-1)"
-                />
+                <div className="flex items-center gap-2">
+                    <Slider
+                        value={customOffset ?? 0}
+                        onChange={e => setCustomOffset(typeof e.value === "number" ? e.value : 0)}
+                        min={0}
+                        max={1}
+                        step={0.01}
+                        className="w-full"
+                    />
+                    <span className="w-12 text-right tabular-nums">
+                        {(customOffset ?? 0).toFixed(2)}
+                    </span>
+                </div>
             )}
         </div>
     );
@@ -107,6 +113,9 @@ export default function FlooringConfigurator({
     floorId,
     onSave,
     existingFlooring,
+    setSelectedFlooringId,
+    onCancel,
+    handleFlooringChanged,
 }: FlooringConfiguratorProps) {
     const [name, setName] = useState(existingFlooring?.name || "Neuer Bodenbelag");
     const [tileWidth, setTileWidth] = useState(existingFlooring?.tileWidth || 60);
@@ -124,11 +133,73 @@ export default function FlooringConfigurator({
     );
     const [position] = useState<[number, number]>(existingFlooring?.position || [0, 0]);
 
+    useEffect(() => {
+        if (existingFlooring?.floorId === floorId) {
+            return;
+        }
+
+        // If this is a new flooring (no id), select it immediately
+        if (!existingFlooring && setSelectedFlooringId) {
+            setSelectedFlooringId(null); // Deselect any previous
+        } else if (existingFlooring && setSelectedFlooringId) {
+            setSelectedFlooringId(existingFlooring.id);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [existingFlooring]);
+
     const getEffectiveOffset = () => {
-        if (selectedOffset == null) return 0;
-        if (selectedOffset === -1 && customOffset !== null) return customOffset;
-        return selectedOffset === -1 ? Math.random() : selectedOffset;
+        if (selectedOffset == null) {
+            return 0;
+        }
+        if (selectedOffset === -1 && customOffset !== null) {
+            return customOffset;
+        }
+        return selectedOffset;
     };
+
+    useEffect(() => {
+        // Check if the flooring has changed
+        const flooringChanged =
+            existingFlooring &&
+            !isEqual(
+                {
+                    id: existingFlooring.id,
+                    name,
+                    tileWidth,
+                    tileHeight,
+                    offset: getEffectiveOffset(),
+                    position,
+                    floorId,
+                },
+                existingFlooring
+            );
+
+        if (!flooringChanged) {
+            return;
+        }
+
+        if (handleFlooringChanged && existingFlooring) {
+            handleFlooringChanged({
+                id: existingFlooring.id,
+                name,
+                tileWidth,
+                tileHeight,
+                offset: getEffectiveOffset(),
+                position,
+                floorId,
+            });
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [
+        name,
+        tileWidth,
+        tileHeight,
+        selectedOffset,
+        customOffset,
+        position,
+        existingFlooring,
+        floorId,
+    ]);
 
     const handleSave = () => {
         onSave({
@@ -166,12 +237,22 @@ export default function FlooringConfigurator({
                     setCustomOffset={setCustomOffset}
                 />
                 {/* Positionseingabe könnte hier als weiteres UI-Element ergänzt werden */}
-                <Button
-                    label="Speichern"
-                    icon="pi pi-save"
-                    onClick={handleSave}
-                    className="w-full"
-                />
+                <div className="flex gap-2">
+                    <Button
+                        label="Speichern"
+                        icon="pi pi-save"
+                        onClick={handleSave}
+                        className="w-full"
+                    />
+                    {onCancel && (
+                        <Button
+                            label="Abbrechen"
+                            icon="pi pi-times"
+                            onClick={onCancel}
+                            className="w-full p-button-secondary"
+                        />
+                    )}
+                </div>
             </div>
         </Panel>
     );

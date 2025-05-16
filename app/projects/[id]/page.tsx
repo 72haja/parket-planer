@@ -22,6 +22,7 @@ export default function ProjectPage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [selectedFlooringId, setSelectedFlooringId] = useState<string | null>(null);
+    const [optimisticFloorings, setOptimisticFloorings] = useState<Flooring[]>([]);
 
     // Lade das Projekt beim Seitenladen
     useEffect(() => {
@@ -276,9 +277,10 @@ export default function ProjectPage() {
         ? project.data.floorings.filter(f => f.floorId === currentFloor.id)
         : [];
 
-    // Falls ein bestimmter Bodenbelag ausgewählt wurde
+    // --- PATCH: Merge optimistic floorings for selection and canvas ---
+    const allFloorings = [...currentFloorFloorings, ...optimisticFloorings];
     const selectedFlooring = selectedFlooringId
-        ? project.data.floorings.find(f => f.id === selectedFlooringId)
+        ? allFloorings.find(f => f.id === selectedFlooringId)
         : undefined;
 
     return (
@@ -325,7 +327,8 @@ export default function ProjectPage() {
                         setSelectedFlooringId={setSelectedFlooringId}
                         handleAddFlooring={handleAddFlooring}
                         handleDeleteFlooring={handleDeleteFlooring}
-                        selectedFlooring={selectedFlooring}
+                        optimisticFloorings={optimisticFloorings}
+                        setOptimisticFloorings={setOptimisticFloorings}
                     />
                 </div>
 
@@ -339,6 +342,7 @@ export default function ProjectPage() {
                                     setRectangles={rectangles =>
                                         handleFloorUpdate({ ...currentFloor, rooms: rectangles })
                                     }
+                                    flooring={selectedFlooring || null}
                                 />
                             </div>
                         </Card>

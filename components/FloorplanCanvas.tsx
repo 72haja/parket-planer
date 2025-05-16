@@ -1,5 +1,6 @@
 import React, { FC, useEffect, useState } from "react";
 import clsx from "clsx";
+import type { Flooring } from "@/lib/supabase";
 import { Rectangle } from "@/lib/types";
 import InfoTooltipButton from "./InfoTooltipButton";
 import RectangleList from "./RectangleList";
@@ -8,9 +9,10 @@ import { useFloorplanCanvas } from "./useFloorplanCanvas";
 interface FloorplanCanvasProps {
     rectangles: Rectangle[];
     setRectangles: (rectangles: Rectangle[]) => void;
+    flooring?: Flooring | null;
 }
 
-const FloorplanCanvas: FC<FloorplanCanvasProps> = ({ rectangles, setRectangles }) => {
+const FloorplanCanvas: FC<FloorplanCanvasProps> = ({ rectangles, setRectangles, flooring }) => {
     const [fullscreen, setFullscreen] = useState(false);
     const [showControlsTooltip, setShowControlsTooltip] = useState(false);
 
@@ -30,7 +32,7 @@ const FloorplanCanvas: FC<FloorplanCanvasProps> = ({ rectangles, setRectangles }
         setZoom,
         pan,
         setPan,
-    } = useFloorplanCanvas({ rectangles, setRectangles, fullscreen });
+    } = useFloorplanCanvas({ rectangles, setRectangles, fullscreen, flooring });
 
     // Keyboard shortcuts and scroll lock remain in the component
     useEffect(() => {
@@ -144,9 +146,7 @@ const FloorplanCanvas: FC<FloorplanCanvasProps> = ({ rectangles, setRectangles }
                     "flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-6",
                     "flex-1 h-0 min-h-0"
                 )}>
-                <div
-                    ref={canvasContainerRef}
-                    style={{ position: "relative", minHeight: 200 }}>
+                <div ref={canvasContainerRef} style={{ position: "relative", minHeight: 200 }}>
                     <canvas
                         ref={canvasRef}
                         width={canvasDimensions.width}

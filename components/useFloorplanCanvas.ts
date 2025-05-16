@@ -1,17 +1,20 @@
 import { MouseEvent, WheelEvent, useCallback, useEffect, useRef, useState } from "react";
 import { v4 as uuid } from "uuid";
+import type { Flooring } from "@/lib/supabase";
 import { Rectangle } from "@/lib/types";
 
 interface UseFloorplanCanvasProps {
     rectangles: Rectangle[];
     setRectangles: (rectangles: Rectangle[]) => void;
     fullscreen: boolean;
+    flooring?: Flooring | null;
 }
 
 export function useFloorplanCanvas({
     rectangles,
     setRectangles,
     fullscreen,
+    flooring,
 }: UseFloorplanCanvasProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const canvasContainerRef = useRef<HTMLDivElement>(null);
@@ -24,6 +27,13 @@ export function useFloorplanCanvas({
     const [zoom, setZoom] = useState(1);
     const [pan, setPan] = useState({ x: 0, y: 0 });
     const [hoveredRectangleId, setHoveredRectangleId] = useState<string | null>(null);
+
+    // Track flooring drag state
+    const [isDraggingFlooring, setIsDraggingFlooring] = useState(false);
+    const [flooringDragStart, setFlooringDragStart] = useState<{ x: number; y: number } | null>(
+        null
+    );
+    const [flooringStartPos, setFlooringStartPos] = useState<{ x: number; y: number } | null>(null);
 
     // Dynamically set canvas size to match container using ResizeObserver
     useEffect(() => {
@@ -108,6 +118,38 @@ export function useFloorplanCanvas({
         ctx.lineWidth = 1;
     };
 
+    // Helper to draw the flooring pattern
+    function drawFlooringPattern(
+        ctx: CanvasRenderingContext2D,
+        flooring: Flooring,
+        width: number,
+        height: number
+    ) {
+        const tileW = flooring.tileWidth;
+        const tileH = flooring.tileHeight;
+        const offset = flooring.offset || 0;
+        const startX = flooring.position?.[0] || 0;
+        const startY = flooring.position?.[1] || 0;
+        ctx.save();
+        ctx.globalAlpha = 0.15;
+        ctx.strokeStyle = "#8b5cf6";
+        ctx.lineWidth = 1;
+        let row = 0;
+        for (let y = startY; y < height / zoom; y += tileH, row++) {
+            let rowOffset = 0;
+            if (offset > 0 && offset < 1) {
+                rowOffset = (row * tileW * offset) % tileW;
+            } else if (offset === -1) {
+                // Random offset for each row
+                rowOffset = Math.random() * tileW;
+            }
+            for (let x = startX - rowOffset; x < width / zoom; x += tileW) {
+                ctx.strokeRect(x, y, tileW, tileH);
+            }
+        }
+        ctx.restore();
+    }
+
     // Redraw the canvas
     const redrawCanvas = useCallback(() => {
         if (!canvasRef.current) {
@@ -120,6 +162,10 @@ export function useFloorplanCanvas({
             ctx.save();
             ctx.translate(pan.x, pan.y);
             ctx.scale(zoom, zoom);
+            // Draw flooring pattern if present
+            if (flooring) {
+                drawFlooringPattern(ctx, flooring, canvas.width, canvas.height);
+            }
             rectangles.forEach(rect => {
                 const isHighlighted = rect.id === hoveredRectangleId;
                 drawRectangleWithLabels(
@@ -134,7 +180,7 @@ export function useFloorplanCanvas({
             ctx.restore();
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [rectangles, zoom, pan, hoveredRectangleId, canvasDimensions]);
+    }, [rectangles, zoom, pan, hoveredRectangleId, canvasDimensions, flooring]);
 
     // Redraw on changes
     useEffect(() => {
@@ -157,9 +203,20 @@ export function useFloorplanCanvas({
         if (!canvas) {
             return;
         }
+        // Always allow panning with Option/Alt key
         if (e.altKey) {
             setIsPanning(true);
             setLastPanPos({ x: e.clientX, y: e.clientY });
+            return;
+        }
+        // If a flooring is selected, start dragging it
+        if (flooring) {
+            setIsDraggingFlooring(true);
+            setFlooringDragStart({ x: e.clientX, y: e.clientY });
+            setFlooringStartPos({
+                x: flooring.position?.[0] || 0,
+                y: flooring.position?.[1] || 0,
+            });
             return;
         }
         const position = screenToCanvasCoords(e.clientX, e.clientY, canvas);
@@ -170,6 +227,15 @@ export function useFloorplanCanvas({
     const handleMouseMove = (e: MouseEvent<HTMLCanvasElement>) => {
         const canvas = canvasRef.current;
         if (!canvas) return;
+        if (isDraggingFlooring && flooring && flooringDragStart && flooringStartPos) {
+            // Calculate delta in canvas coordinates
+            const deltaX = (e.clientX - flooringDragStart.x) / zoom;
+            const deltaY = (e.clientY - flooringDragStart.y) / zoom;
+            // Update flooring position (mutate flooring object for live preview)
+            flooring.position = [flooringStartPos.x + deltaX, flooringStartPos.y + deltaY];
+            redrawCanvas();
+            return;
+        }
         if (isPanning && lastPanPos) {
             const dx = e.clientX - lastPanPos.x;
             const dy = e.clientY - lastPanPos.y;
@@ -193,6 +259,12 @@ export function useFloorplanCanvas({
     };
 
     const handleMouseUp = (e: MouseEvent<HTMLCanvasElement>) => {
+        if (isDraggingFlooring) {
+            setIsDraggingFlooring(false);
+            setFlooringDragStart(null);
+            setFlooringStartPos(null);
+            return;
+        }
         if (isPanning) {
             setIsPanning(false);
             setLastPanPos(null);

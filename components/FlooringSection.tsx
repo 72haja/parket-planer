@@ -1,8 +1,9 @@
-import React from "react";
+import React, { FC, useState } from "react";
 import clsx from "clsx";
 import { Button } from "primereact/button";
 import { Card } from "primereact/card";
 import { TabPanel, TabView } from "primereact/tabview";
+import { v4 as uuid } from "uuid";
 import FlooringConfigurator from "@/components/FlooringConfigurator";
 import { Floor, Flooring } from "@/lib/supabase";
 
@@ -13,30 +14,81 @@ interface FlooringSectionProps {
     setSelectedFlooringId: (id: string | null) => void;
     handleDeleteFlooring: (id: string) => void;
     handleAddFlooring: (flooring: Omit<Flooring, "id">) => void;
-    selectedFlooring?: Flooring;
+    optimisticFloorings: Flooring[];
+    setOptimisticFloorings: React.Dispatch<React.SetStateAction<Flooring[]>>;
 }
 
-const FlooringSection: React.FC<FlooringSectionProps> = ({
+const FlooringSection: FC<FlooringSectionProps> = ({
     currentFloor,
     currentFloorFloorings,
     selectedFlooringId,
     setSelectedFlooringId,
     handleDeleteFlooring,
     handleAddFlooring,
-    selectedFlooring,
+    optimisticFloorings,
+    setOptimisticFloorings,
 }) => {
+    const [isCreating, setIsCreating] = useState(false);
+
+    // Add optimistic flooring when creating a new one
+    const handleStartCreate = () => {
+        if (!currentFloor) return;
+        setIsCreating(true);
+        const tempId = "optimistic-" + uuid();
+        const newFlooring: Flooring = {
+            id: tempId,
+            name: "Neuer Bodenbelag",
+            tileWidth: 60,
+            tileHeight: 30,
+            offset: 0,
+            position: [0, 0],
+            floorId: currentFloor.id,
+        };
+        setOptimisticFloorings([...optimisticFloorings, newFlooring]);
+        setSelectedFlooringId(tempId);
+    };
+
+    const handleFlooringChanged = (flooring: Flooring) => {
+        setOptimisticFloorings(floorings =>
+            floorings.map(f => (f.id === flooring.id ? flooring : f))
+        );
+    };
+
+    // Remove optimistic flooring if creation is cancelled
+    const handleCancelCreate = () => {
+        setIsCreating(false);
+        setOptimisticFloorings(floorings => floorings.filter(f => !f.id.startsWith("optimistic-")));
+        setSelectedFlooringId(null);
+    };
+
+    // When saving, replace optimistic with real
+    const handleSaveFlooring = (flooring: Omit<Flooring, "id">) => {
+        handleAddFlooring(flooring);
+        setIsCreating(false);
+        setOptimisticFloorings(floorings => floorings.filter(f => !f.id.startsWith("optimistic-")));
+    };
+
+    // Merge optimistic and real floorings for display
+    const allFloorings = [...currentFloorFloorings, ...optimisticFloorings];
+
     return (
         <Card title="Bodenbeläge">
             <div className="mb-3">
-                <TabView className="[&>.p-tabview-panels]:!px-0">
+                <TabView
+                    className="[&>.p-tabview-panels]:!px-0"
+                    onBeforeTabChange={() => {
+                        if (isCreating) {
+                            handleCancelCreate();
+                        }
+                    }}>
                     <TabPanel header="Liste">
-                        {currentFloorFloorings.length === 0 ? (
+                        {allFloorings.length === 0 ? (
                             <p className="text-gray-500 py-2">
                                 Keine Bodenbeläge für dieses Stockwerk definiert.
                             </p>
                         ) : (
                             <ul className="list-none p-0">
-                                {currentFloorFloorings.map(flooring => (
+                                {allFloorings.map(flooring => (
                                     <li
                                         key={flooring.id}
                                         className={clsx(
@@ -70,16 +122,26 @@ const FlooringSection: React.FC<FlooringSectionProps> = ({
                         )}
                     </TabPanel>
                     <TabPanel header="Neu">
-                        {currentFloor && (
+                        {currentFloor && isCreating ? (
                             <FlooringConfigurator
                                 floorId={currentFloor.id}
-                                onSave={handleAddFlooring}
-                                existingFlooring={selectedFlooring}
+                                onSave={handleSaveFlooring}
+                                existingFlooring={optimisticFloorings[0]}
+                                setSelectedFlooringId={setSelectedFlooringId}
+                                onCancel={handleCancelCreate}
+                                handleFlooringChanged={handleFlooringChanged}
+                            />
+                        ) : (
+                            <Button
+                                label="Neuen Bodenbelag anlegen"
+                                onClick={handleStartCreate}
+                                className="w-full"
                             />
                         )}
                     </TabPanel>
                 </TabView>
             </div>
+            {currentFloor && null}
         </Card>
     );
 };

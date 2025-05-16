@@ -25,8 +25,9 @@ export function useFloorplanCanvas({
     const [pan, setPan] = useState({ x: 0, y: 0 });
     const [hoveredRectangleId, setHoveredRectangleId] = useState<string | null>(null);
 
-    // Dynamically set canvas size to match container
+    // Dynamically set canvas size to match container using ResizeObserver
     useEffect(() => {
+        let observer: ResizeObserver | null = null;
         function updateCanvasSize() {
             let container: HTMLDivElement | null = null;
             let width = 800;
@@ -46,9 +47,25 @@ export function useFloorplanCanvas({
             }
             setCanvasDimensions({ width: Math.max(width, 200), height: Math.max(height, 200) });
         }
-        updateCanvasSize();
+        // Observe the relevant container for size changes
+        const container =
+            fullscreen && fullscreenContainerRef.current
+                ? fullscreenContainerRef.current
+                : canvasContainerRef.current;
+        if (container && typeof window !== "undefined" && "ResizeObserver" in window) {
+            observer = new ResizeObserver(() => {
+                updateCanvasSize();
+            });
+            observer.observe(container);
+        }
+        // Fallback: update on window resize
         window.addEventListener("resize", updateCanvasSize);
-        return () => window.removeEventListener("resize", updateCanvasSize);
+        // Initial update
+        updateCanvasSize();
+        return () => {
+            if (observer && container) observer.unobserve(container);
+            window.removeEventListener("resize", updateCanvasSize);
+        };
     }, [fullscreen]);
 
     // Helper function to draw a rectangle with consistent label placement

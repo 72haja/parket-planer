@@ -146,7 +146,6 @@ const FloorplanCanvas: FC<FloorplanCanvasProps> = ({ rectangles, setRectangles }
                 )}>
                 <div
                     ref={canvasContainerRef}
-                    className={fullscreen ? "flex-1 flex items-center justify-center" : "flex-1"}
                     style={{ position: "relative", minHeight: 200 }}>
                     <canvas
                         ref={canvasRef}

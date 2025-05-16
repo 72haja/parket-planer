@@ -2,13 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import clsx from "clsx";
 import { Button } from "primereact/button";
 import { Card } from "primereact/card";
 import { ProgressSpinner } from "primereact/progressspinner";
-import { TabPanel, TabView } from "primereact/tabview";
 import { Toast } from "primereact/toast";
-import FlooringConfigurator from "@/components/FlooringConfigurator";
+import FlooringSection from "@/components/FlooringSection";
 import FloorplanCanvas from "@/components/FloorplanCanvas";
 import Floors from "@/components/Floors";
 import { Floor, Flooring, FloorplanData, Project, supabase } from "@/lib/supabase";
@@ -320,66 +318,15 @@ export default function ProjectPage() {
                         />
                     </Card>
 
-                    {/* Bodenbeläge */}
-                    <Card title="Bodenbeläge">
-                        <div className="mb-3">
-                            <TabView>
-                                <TabPanel header="Liste">
-                                    {currentFloorFloorings.length === 0 ? (
-                                        <p className="text-gray-500 py-2">
-                                            Keine Bodenbeläge für dieses Stockwerk definiert.
-                                        </p>
-                                    ) : (
-                                        <ul className="list-none p-0">
-                                            {currentFloorFloorings.map(flooring => (
-                                                <li
-                                                    key={flooring.id}
-                                                    className={clsx(
-                                                        `p-2 border-b cursor-pointer flex justify-between items-center`,
-                                                        selectedFlooringId === flooring.id &&
-                                                            "bg-blue-50"
-                                                    )}
-                                                    onClick={() =>
-                                                        setSelectedFlooringId(
-                                                            selectedFlooringId === flooring.id
-                                                                ? null
-                                                                : flooring.id
-                                                        )
-                                                    }>
-                                                    <div>
-                                                        <div className="font-medium">
-                                                            {flooring.name}
-                                                        </div>
-                                                        <div className="text-sm text-gray-500">
-                                                            {flooring.tileWidth}×
-                                                            {flooring.tileHeight} cm
-                                                        </div>
-                                                    </div>
-                                                    <Button
-                                                        icon="pi pi-trash"
-                                                        className="p-button-rounded p-button-danger p-button-sm"
-                                                        onClick={e => {
-                                                            e.stopPropagation();
-                                                            handleDeleteFlooring(flooring.id);
-                                                        }}
-                                                    />
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    )}
-                                </TabPanel>
-                                <TabPanel header="Neu">
-                                    {currentFloor && (
-                                        <FlooringConfigurator
-                                            floorId={currentFloor.id}
-                                            onSave={handleAddFlooring}
-                                            existingFlooring={selectedFlooring}
-                                        />
-                                    )}
-                                </TabPanel>
-                            </TabView>
-                        </div>
-                    </Card>
+                    <FlooringSection
+                        currentFloor={currentFloor}
+                        currentFloorFloorings={currentFloorFloorings}
+                        selectedFlooringId={selectedFlooringId}
+                        setSelectedFlooringId={setSelectedFlooringId}
+                        handleAddFlooring={handleAddFlooring}
+                        handleDeleteFlooring={handleDeleteFlooring}
+                        selectedFlooring={selectedFlooring}
+                    />
                 </div>
 
                 {/* Hauptbereich - Canvas */}

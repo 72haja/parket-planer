@@ -78,7 +78,7 @@ function TileSizeInputs({
     setTileHeight: (v: number) => void;
 }) {
     return (
-        <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 gap-4 mb-4">
             <div>
                 <label className="block mb-1 font-medium">Fliesenbreite (cm)</label>
                 <InputNumber

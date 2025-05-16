@@ -38,6 +38,9 @@ export function useFloorplanCanvas({
     // Snap point state
     const [snapPoint, setSnapPoint] = useState<{ x: number; y: number } | null>(null);
 
+    // Store the last preview end position for stable preview rendering
+    const [previewEnd, setPreviewEnd] = useState<{ x: number; y: number } | null>(null);
+
     // Dynamically set canvas size to match container using ResizeObserver
     useEffect(() => {
         let observer: ResizeObserver | null = null;
@@ -194,9 +197,17 @@ export function useFloorplanCanvas({
                 ctx.stroke();
                 ctx.restore();
             }
+            // Draw preview rectangle if drawing
+            if (isDrawing && startPos && previewEnd) {
+                ctx.save();
+                const width = previewEnd.x - startPos.x;
+                const height = previewEnd.y - startPos.y;
+                drawRectangleWithLabels(ctx, startPos.x, startPos.y, width, height);
+                ctx.restore();
+            }
             ctx.restore();
         }
-    }, [rectangles, zoom, pan, hoveredRectangleId, flooring, snapPoint, drawFlooringPattern]);
+    }, [rectangles, zoom, pan, hoveredRectangleId, flooring, snapPoint, drawFlooringPattern, isDrawing, startPos, previewEnd]);
 
     // Redraw on changes
     useEffect(() => {
@@ -235,7 +246,13 @@ export function useFloorplanCanvas({
             });
             return;
         }
-        const position = screenToCanvasCoords(e.clientX, e.clientY, canvas);
+        // Use snapPoint as start position if present
+        let position;
+        if (snapPoint) {
+            position = { ...snapPoint };
+        } else {
+            position = screenToCanvasCoords(e.clientX, e.clientY, canvas);
+        }
         setIsDrawing(true);
         setStartPos(position);
     };
@@ -298,26 +315,26 @@ export function useFloorplanCanvas({
             });
         });
         // Only show snap dot if within 20px (canvas units)
+        let snapActive = false;
         if (nearest && minDist < 20) {
             setSnapPoint(nearest);
+            snapActive = true;
         } else {
             setSnapPoint(null);
         }
+        // Rectangle preview: use local nearest if snapping, else mouse
         if (!isDrawing || !startPos) {
+            setPreviewEnd(null);
             return;
         }
-        const currentPos = screenToCanvasCoords(e.clientX, e.clientY, canvas);
-        const ctx = canvas.getContext("2d");
-        if (ctx) {
-            redrawCanvas();
-            ctx.save();
-            ctx.translate(pan.x, pan.y);
-            ctx.scale(zoom, zoom);
-            const width = currentPos.x - startPos.x;
-            const height = currentPos.y - startPos.y;
-            drawRectangleWithLabels(ctx, startPos.x, startPos.y, width, height);
-            ctx.restore();
+        let currentPos;
+        if (snapActive && nearest) {
+            currentPos = nearest;
+        } else {
+            currentPos = mousePos;
         }
+        setPreviewEnd(currentPos);
+        // Don't draw here, let redrawCanvas handle it
     };
 
     const handleMouseUp = (e: MouseEvent<HTMLCanvasElement>) => {
@@ -325,18 +342,27 @@ export function useFloorplanCanvas({
             setIsDraggingFlooring(false);
             setFlooringDragStart(null);
             setFlooringStartPos(null);
+            setPreviewEnd(null);
             return;
         }
         if (isPanning) {
             setIsPanning(false);
             setLastPanPos(null);
+            setPreviewEnd(null);
             return;
         }
         if (!isDrawing || !startPos || !canvasRef.current) {
+            setPreviewEnd(null);
             return;
         }
         const canvas = canvasRef.current;
-        const endPos = screenToCanvasCoords(e.clientX, e.clientY, canvas);
+        // Use snapPoint as end position if present
+        let endPos;
+        if (snapPoint) {
+            endPos = { ...snapPoint };
+        } else {
+            endPos = screenToCanvasCoords(e.clientX, e.clientY, canvas);
+        }
         const width = endPos.x - startPos.x;
         const height = endPos.y - startPos.y;
         if (Math.abs(width) > 0 && Math.abs(height) > 0) {
@@ -354,6 +380,7 @@ export function useFloorplanCanvas({
         }
         setIsDrawing(false);
         setStartPos(null);
+        setPreviewEnd(null);
     };
 
     const handleWheel = (e: WheelEvent<HTMLCanvasElement>) => {

@@ -1,3 +1,4 @@
+import { Rectangle } from "@/lib/types";
 import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
@@ -28,14 +29,8 @@ export type FloorplanData = {
 export type Floor = {
     id: string;
     name: string;
-    walls: Wall[];
+    rooms: Rectangle[];
     doors: Door[];
-};
-
-export type Wall = {
-    id: string;
-    points: [number, number][];
-    thickness: number;
 };
 
 export type Door = {

@@ -77,7 +77,7 @@ export default function ProjectManager() {
             }
 
             // Projektdaten vorbereiten
-            const newProject = {
+            const newProject: Partial<Project> = {
                 name: newProjectName.trim(),
                 user_id: userData.user.id,
                 data: {
@@ -85,7 +85,7 @@ export default function ProjectManager() {
                         {
                             id: crypto.randomUUID(),
                             name: "Erdgeschoss",
-                            walls: [],
+                            rooms: [],
                             doors: [],
                         },
                     ],

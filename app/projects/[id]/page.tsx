@@ -10,7 +10,7 @@ import { TabPanel, TabView } from "primereact/tabview";
 import { Toast } from "primereact/toast";
 import FlooringConfigurator from "@/components/FlooringConfigurator";
 import FloorplanCanvas from "@/components/FloorplanCanvas";
-import Rooms from "@/components/Rooms";
+import Floors from "@/components/Floors";
 import { Floor, Flooring, FloorplanData, Project, supabase } from "@/lib/supabase";
 
 export default function ProjectPage() {
@@ -41,17 +41,13 @@ export default function ProjectPage() {
                             {
                                 id: "demo-floor-1",
                                 name: "Erdgeschoss",
-                                walls: [
+                                rooms: [
                                     {
                                         id: "demo-wall-1",
-                                        points: [
-                                            [50, 50],
-                                            [350, 50],
-                                            [350, 250],
-                                            [50, 250],
-                                            [50, 50],
-                                        ],
-                                        thickness: 15,
+                                        x: 50,
+                                        y: 50,
+                                        width: 200,
+                                        height: 100,
                                     },
                                 ],
                                 doors: [
@@ -154,6 +150,58 @@ export default function ProjectPage() {
         });
     };
 
+    // Neuer Handler für das Hinzufügen eines neuen Stockwerks
+    const handleAddFloor = (floor: Floor) => {
+        if (!project) return;
+
+        saveProject({
+            ...project.data,
+            floors: [...project.data.floors, floor],
+            // Nach dem Hinzufügen das neue Stockwerk auswählen
+            selectedFloor: project.data.floors.length,
+        });
+    };
+
+    // Neuer Handler für das Löschen eines Stockwerks
+    const handleDeleteFloor = (floorId: string) => {
+        if (!project) return;
+
+        // Index des zu löschenden Stockwerks finden
+        const floorIndex = project.data.floors.findIndex(floor => floor.id === floorId);
+        if (floorIndex === -1) return;
+
+        // Stockwerk löschen
+        const newFloors = project.data.floors.filter(floor => floor.id !== floorId);
+
+        // Alle Bodenbeläge dieses Stockwerks entfernen
+        const newFloorings = project.data.floorings.filter(
+            flooring => flooring.floorId !== floorId
+        );
+
+        // Neue selectedFloor berechnen
+        let newSelectedFloor = project.data.selectedFloor;
+        if (floorIndex <= project.data.selectedFloor && newSelectedFloor > 0) {
+            newSelectedFloor--;
+        }
+
+        saveProject({
+            ...project.data,
+            floors: newFloors,
+            floorings: newFloorings,
+            selectedFloor: newSelectedFloor,
+        });
+    };
+
+    // Neuer Handler für Stockwerk-Auswahl
+    const handleSelectFloor = (index: number) => {
+        if (!project || project.data.selectedFloor === index) return;
+
+        saveProject({
+            ...project.data,
+            selectedFloor: index,
+        });
+    };
+
     // Handler für das Hinzufügen eines neuen Bodenbelags
     const handleAddFlooring = (flooring: Omit<Flooring, "id">) => {
         if (!project) return;
@@ -170,20 +218,6 @@ export default function ProjectPage() {
 
         // Wähle den neuen Bodenbelag aus
         setSelectedFlooringId(newFlooring.id);
-    };
-
-    // Handler für das Aktualisieren eines Bodenbelags
-    const handleUpdateFlooringPosition = (flooring: Flooring, position: [number, number]) => {
-        if (!project) return;
-
-        const updatedFloorings = project.data.floorings.map(f =>
-            f.id === flooring.id ? { ...f, position } : f
-        );
-
-        saveProject({
-            ...project.data,
-            floorings: updatedFloorings,
-        });
     };
 
     // Handler für das Löschen eines Bodenbelags
@@ -249,19 +283,6 @@ export default function ProjectPage() {
         ? project.data.floorings.find(f => f.id === selectedFlooringId)
         : undefined;
 
-    const updateFlooring = (flooring: Flooring) => {
-        if (!project) return;
-
-        const updatedFloorings = project.data.floorings.map(f =>
-            f.id === flooring.id ? { ...f, ...flooring } : f
-        );
-
-        saveProject({
-            ...project.data,
-            floorings: updatedFloorings,
-        });
-    }
-
     return (
         <div className="flex flex-col gap-4">
             <Toast ref={toast} />
@@ -288,14 +309,15 @@ export default function ProjectPage() {
                 {/* Linke Seitenleiste - Stockwerke und Controls */}
                 <div className="lg:col-span-1 flex flex-col gap-4">
                     {/* Stockwerksauswahl */}
-                    <Card title="Stockwerke">
-                        {currentFloor && (
-                            <Rooms
-                                floorId={currentFloor?.id}
-                                onSave={updateFlooring}
-                                existingFlooring={selectedFlooring}
-                            />
-                        )}
+                    <Card>
+                        <Floors
+                            floors={project.data.floors}
+                            selectedFloorIndex={project.data.selectedFloor}
+                            onSelectFloor={handleSelectFloor}
+                            onUpdateFloor={handleFloorUpdate}
+                            onAddFloor={handleAddFloor}
+                            onDeleteFloor={handleDeleteFloor}
+                        />
                     </Card>
 
                     {/* Bodenbeläge */}
@@ -366,11 +388,10 @@ export default function ProjectPage() {
                         <Card>
                             <div className="mb-3">
                                 <FloorplanCanvas
-                                    floor={currentFloor}
-                                    floorings={currentFloorFloorings}
-                                    editable={true}
-                                    onFloorUpdate={handleFloorUpdate}
-                                    onFlooringPositionUpdate={handleUpdateFlooringPosition}
+                                    rectangles={currentFloor.rooms}
+                                    setRectangles={rectangles =>
+                                        handleFloorUpdate({ ...currentFloor, rooms: rectangles })
+                                    }
                                 />
                             </div>
                         </Card>

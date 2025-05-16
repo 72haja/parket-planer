@@ -2,7 +2,7 @@ import React, { FC, useEffect, useState } from "react";
 import clsx from "clsx";
 import type { Flooring } from "@/lib/supabase";
 import { Rectangle } from "@/lib/types";
-import InfoTooltipButton from "./InfoTooltipButton";
+import CanvasSettingsBar from "./CanvasSettingsBar";
 import RectangleList from "./RectangleList";
 import { useFloorplanCanvas } from "./useFloorplanCanvas";
 
@@ -87,60 +87,14 @@ const FloorplanCanvas: FC<FloorplanCanvasProps> = ({ rectangles, setRectangles, 
                 fullscreen &&
                     "h-screen w-screen fixed inset-0 z-50 bg-white p-4 md:p-8 transition-all duration-300"
             )}>
-            <div className="flex items-center mb-2 justify-between">
-                <div>
-                    <span className="mr-2">Zoom: {(zoom * 100).toFixed(0)}%</span>
-                    <button
-                        onClick={resetZoom}
-                        className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm transition-colors mr-2">
-                        Reset View
-                    </button>
-                    <InfoTooltipButton
-                        show={showControlsTooltip}
-                        setShow={setShowControlsTooltip}
-                    />
-                </div>
-                <button
-                    onClick={() => setFullscreen(f => !f)}
-                    className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded text-sm transition-colors flex items-center"
-                    aria-label={fullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}>
-                    {fullscreen ? (
-                        <>
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="h-4 w-4 mr-1"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor">
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M9 13H5v6h6v-4m6-6h4V5h-6v4m0 6v4h6v-6h-4m-6-6V5H5v6h4"
-                                />
-                            </svg>
-                            Exit Fullscreen
-                        </>
-                    ) : (
-                        <>
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="h-4 w-4 mr-1"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor">
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M4 8V4h4M20 16v4h-4M4 16v4h4m12-12V4h-4"
-                                />
-                            </svg>
-                            Fullscreen
-                        </>
-                    )}
-                </button>
-            </div>
+            <CanvasSettingsBar
+                zoom={zoom}
+                resetZoom={resetZoom}
+                showControlsTooltip={showControlsTooltip}
+                setShowControlsTooltip={setShowControlsTooltip}
+                fullscreen={fullscreen}
+                setFullscreen={setFullscreen}
+            />
             <div
                 className={clsx(
                     "flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-6",

@@ -385,8 +385,8 @@ export default function ProjectPage() {
                 {/* Hauptbereich - Canvas */}
                 <div className="lg:col-span-2">
                     {currentFloor && (
-                        <Card>
-                            <div className="mb-3">
+                        <Card className="h-full [&>.p-card-body]:h-full [&>div>.p-card-content]:h-full">
+                            <div className="mb-3 h-full">
                                 <FloorplanCanvas
                                     rectangles={currentFloor.rooms}
                                     setRectangles={rectangles =>

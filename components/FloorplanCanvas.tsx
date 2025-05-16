@@ -11,6 +11,9 @@ interface FloorplanCanvasProps {
 
 const FloorplanCanvas: React.FC<FloorplanCanvasProps> = ({ rectangles, setRectangles }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const canvasContainerRef = useRef<HTMLDivElement>(null);
+    const fullscreenContainerRef = useRef<HTMLDivElement>(null);
+    const [canvasDimensions, setCanvasDimensions] = useState({ width: 800, height: 600 });
     const [isDrawing, setIsDrawing] = useState(false);
     const [isPanning, setIsPanning] = useState(false);
     const [startPos, setStartPos] = useState<{ x: number; y: number } | null>(null);
@@ -19,8 +22,35 @@ const FloorplanCanvas: React.FC<FloorplanCanvasProps> = ({ rectangles, setRectan
     const [pan, setPan] = useState({ x: 0, y: 0 }); // For panning implementation
     const [hoveredRectangleId, setHoveredRectangleId] = useState<string | null>(null);
     const [fullscreen, setFullscreen] = useState(false);
-    const fullscreenContainerRef = useRef<HTMLDivElement>(null);
     const [showControlsTooltip, setShowControlsTooltip] = useState(false);
+
+    // Dynamically set canvas size to match container
+    useEffect(() => {
+        function updateCanvasSize() {
+            let container: HTMLDivElement | null = null;
+            let width = 800;
+            let height = 600;
+            if (fullscreen && fullscreenContainerRef.current) {
+                // In fullscreen, subtract sidebar and paddings
+                container = fullscreenContainerRef.current;
+                const rect = container.getBoundingClientRect();
+                // Sidebar is md:w-96 (384px), padding is md:p-8 (32px each side)
+                const sidebarWidth = 384; // px
+                const padding = 32 * 2; // left + right
+                width = Math.floor(rect.width - sidebarWidth - padding);
+                height = Math.floor(rect.height - padding); // top + bottom
+            } else if (canvasContainerRef.current) {
+                container = canvasContainerRef.current;
+                const rect = container.getBoundingClientRect();
+                width = Math.floor(rect.width);
+                height = Math.floor(rect.height);
+            }
+            setCanvasDimensions({ width: Math.max(width, 200), height: Math.max(height, 200) });
+        }
+        updateCanvasSize();
+        window.addEventListener("resize", updateCanvasSize);
+        return () => window.removeEventListener("resize", updateCanvasSize);
+    }, [fullscreen]);
 
     // Handle keyboard shortcuts and key states
     useEffect(() => {
@@ -334,18 +364,19 @@ const FloorplanCanvas: React.FC<FloorplanCanvasProps> = ({ rectangles, setRectan
                             onMouseLeave={() => setShowControlsTooltip(false)}
                             className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-700"
                             aria-label="Canvas controls information">
+                            {/* Improved info icon SVG */}
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
-                                className="h-4 w-4"
-                                fill="none"
                                 viewBox="0 0 24 24"
-                                stroke="currentColor">
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                                />
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="h-4 w-4">
+                                <circle cx="12" cy="12" r="10" />
+                                <line x1="12" y1="16" x2="12" y2="12" />
+                                <circle cx="12" cy="8.5" r="1" />
                             </svg>
                         </button>
                         {showControlsTooltip && (
@@ -414,14 +445,16 @@ const FloorplanCanvas: React.FC<FloorplanCanvasProps> = ({ rectangles, setRectan
             <div
                 className={clsx(
                     "flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-6",
-                    // fullscreen && "flex-1 h-0 min-h-0"
                     "flex-1 h-0 min-h-0"
                 )}>
-                <div className={fullscreen ? "flex-1 flex items-center justify-center" : "flex-1"}>
+                <div
+                    ref={canvasContainerRef}
+                    className={fullscreen ? "flex-1 flex items-center justify-center" : "flex-1"}
+                    style={{ position: "relative", minHeight: 200 }}>
                     <canvas
                         ref={canvasRef}
-                        width={fullscreen ? window.innerWidth - 400 : 800}
-                        height={window.innerHeight - 100}
+                        width={canvasDimensions.width}
+                        height={canvasDimensions.height}
                         className={clsx(
                             "w-full h-full border border-gray-200 rounded-md shadow-sm bg-white",
                             isPanning ? "cursor-move" : "cursor-crosshair",

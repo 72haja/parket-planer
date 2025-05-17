@@ -125,36 +125,34 @@ export function useFloorplanCanvas({
     };
 
     // Helper to draw the flooring pattern
-    function drawFlooringPattern(
-        ctx: CanvasRenderingContext2D,
-        flooring: Flooring,
-        width: number,
-        height: number
-    ) {
-        const tileW = flooring.tileWidth;
-        const tileH = flooring.tileHeight;
-        const offset = flooring.offset || 0;
-        const startX = flooring.position?.[0] || 0;
-        const startY = flooring.position?.[1] || 0;
-        ctx.save();
-        ctx.globalAlpha = 0.15;
-        ctx.strokeStyle = "#8b5cf6";
-        ctx.lineWidth = 1;
-        let row = 0;
-        for (let y = startY; y < height / zoom; y += tileH, row++) {
-            let rowOffset = 0;
-            if (offset > 0 && offset < 1) {
-                rowOffset = (row * tileW * offset) % tileW;
-            } else if (offset === -1) {
-                // Random offset for each row
-                rowOffset = Math.random() * tileW;
+    const drawFlooringPattern = useCallback(
+        (ctx: CanvasRenderingContext2D, flooring: Flooring, width: number, height: number) => {
+            const tileW = flooring.tileWidth;
+            const tileH = flooring.tileHeight;
+            const offset = flooring.offset || 0;
+            const startX = flooring.position?.[0] || 0;
+            const startY = flooring.position?.[1] || 0;
+            ctx.save();
+            ctx.globalAlpha = 0.15;
+            ctx.strokeStyle = "#8b5cf6";
+            ctx.lineWidth = 1;
+            let row = 0;
+            for (let y = startY; y < height / zoom; y += tileH, row++) {
+                let rowOffset = 0;
+                if (offset > 0 && offset < 1) {
+                    rowOffset = (row * tileW * offset) % tileW;
+                } else if (offset === -1) {
+                    // Random offset for each row
+                    rowOffset = Math.random() * tileW;
+                }
+                for (let x = startX - rowOffset; x < width / zoom; x += tileW) {
+                    ctx.strokeRect(x, y, tileW, tileH);
+                }
             }
-            for (let x = startX - rowOffset; x < width / zoom; x += tileW) {
-                ctx.strokeRect(x, y, tileW, tileH);
-            }
-        }
-        ctx.restore();
-    }
+            ctx.restore();
+        },
+        [zoom]
+    );
 
     // Redraw the canvas
     const redrawCanvas = useCallback(() => {
@@ -207,7 +205,18 @@ export function useFloorplanCanvas({
             }
             ctx.restore();
         }
-    }, [rectangles, zoom, pan, hoveredRectangleId, flooring, snapPoint, drawFlooringPattern, isDrawing, startPos, previewEnd]);
+    }, [
+        rectangles,
+        zoom,
+        pan,
+        hoveredRectangleId,
+        flooring,
+        snapPoint,
+        drawFlooringPattern,
+        isDrawing,
+        startPos,
+        previewEnd,
+    ]);
 
     // Redraw on changes
     useEffect(() => {

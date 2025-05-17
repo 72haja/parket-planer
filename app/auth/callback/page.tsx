@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, useEffect } from "react";
+import { FC, Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card } from "primereact/card";
 import { ProgressSpinner } from "primereact/progressspinner";
@@ -64,4 +64,12 @@ const AuthCallback: FC = () => {
     );
 };
 
-export default AuthCallback;
+const AuthCallbackWithSuspense: FC = () => {
+    return (
+        <Suspense>
+            <AuthCallback />
+        </Suspense>
+    );
+};
+
+export default AuthCallbackWithSuspense;

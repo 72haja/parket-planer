@@ -26,10 +26,11 @@ export const CanvasSettingsBar: FC<CanvasSettingsBarProps> = ({
 }) => {
     return (
         <div className="flex items-center mb-2 justify-between">
-            <div className="flex items-center">
+            <div className="flex items-center gap-2">
                 <span className="mr-2">Zoom: {(zoom * 100).toFixed(0)}%</span>
                 <PrimeButton
                     label="Reset"
+                    size="small"
                     className="p-1 px-2 border rounded bg-gray-100 hover:bg-gray-200 text-xs mr-4"
                     onClick={resetZoom}
                 />
@@ -43,6 +44,7 @@ export const CanvasSettingsBar: FC<CanvasSettingsBarProps> = ({
             </div>
             <PrimeButton
                 label={fullscreen ? "Exit Fullscreen" : "Fullscreen"}
+                size="small"
                 className="p-1 px-2 border rounded bg-gray-100 hover:bg-gray-200 text-xs"
                 onClick={() => setFullscreen(f => !f)}
             />

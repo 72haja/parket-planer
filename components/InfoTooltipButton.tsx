@@ -1,5 +1,4 @@
 import type { FC } from "react";
-import { PrimeButton } from "@/lib/designSystem/atoms/PrimeButton";
 
 interface InfoTooltipButtonProps {
     show: boolean;
@@ -8,25 +7,9 @@ interface InfoTooltipButtonProps {
 
 export const InfoTooltipButton: FC<InfoTooltipButtonProps> = ({ show, setShow }) => {
     return (
-        <div className="relative inline-block">
-            <PrimeButton
-                label=""
-                icon={
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="h-4 w-4">
-                        <circle cx="12" cy="12" r="10" />
-                        <line x1="12" y1="16" x2="12" y2="12" />
-                        <circle cx="12" y="8.5" r="1" />
-                    </svg>
-                }
-                className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-700 p-0 border-none"
+        <div className="relative grid place-items-center">
+            <span
+                className="pi pi-info-circle text-[#6366f1]"
                 aria-label="Canvas controls information"
                 onMouseEnter={() => setShow(true)}
                 onMouseLeave={() => setShow(false)}

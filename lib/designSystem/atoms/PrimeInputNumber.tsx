@@ -1,9 +1,7 @@
 import type { FC } from "react";
-import { InputNumber } from "primereact/inputnumber";
+import { InputNumber, InputNumberProps } from "primereact/inputnumber";
 
-export interface PrimeInputNumberProps {
-    value: number;
-    onValueChange: (e: { value: number | null }) => void;
+export interface PrimeInputNumberProps extends InputNumberProps {
     min?: number;
     max?: number;
     step?: number;

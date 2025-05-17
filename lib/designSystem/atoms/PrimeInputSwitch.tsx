@@ -11,7 +11,12 @@ export interface PrimeInputSwitchProps extends InputSwitchProps {
     label?: string;
 }
 
-export const PrimeInputSwitch: FC<PrimeInputSwitchProps> = ({ className, label, wrapperClassName, ...props }) => {
+export const PrimeInputSwitch: FC<PrimeInputSwitchProps> = ({
+    className,
+    label,
+    wrapperClassName,
+    ...props
+}) => {
     const id = props.id || uuid();
 
     return (

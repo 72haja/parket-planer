@@ -3,7 +3,7 @@ import { ButtonProps, Button as PrimeButtonPrimitive } from "primereact/button";
 import { IconType } from "primereact/utils";
 
 export interface PrimeButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-    label: string;
+    label?: string;
     icon?: IconType<ButtonProps> | undefined;
     className?: string;
 }

@@ -1,11 +1,11 @@
 "use client";
 
 import { FC, useState } from "react";
-import { Button } from "primereact/button";
 import { confirmDialog } from "primereact/confirmdialog";
-import { InputText } from "primereact/inputtext";
 import { Panel } from "primereact/panel";
 import { v4 as uuid } from "uuid";
+import { PrimeButton } from "@/lib/designSystem/atoms/PrimeButton";
+import { PrimeInputText } from "@/lib/designSystem/atoms/PrimeInputText";
 import type { Floor } from "@/lib/supabase";
 
 interface FloorsProps {
@@ -100,18 +100,20 @@ export const Floors: FC<FloorsProps> = ({
                                     onClick={() => handleSelectFloor(index)}>
                                     {editingFloorId === floor.id ? (
                                         <div className="flex items-center gap-2">
-                                            <InputText
+                                            <PrimeInputText
                                                 value={editedName}
                                                 onChange={e => setEditedName(e.target.value)}
                                                 className="w-full p-2"
                                                 autoFocus
                                             />
-                                            <Button
+                                            <PrimeButton
+                                                label=""
                                                 icon="pi pi-check"
                                                 className="p-button-sm p-button-success"
                                                 onClick={() => handleUpdateName(floor)}
                                             />
-                                            <Button
+                                            <PrimeButton
+                                                label=""
                                                 icon="pi pi-times"
                                                 className="p-button-sm p-button-secondary"
                                                 onClick={cancelEditing}
@@ -124,7 +126,8 @@ export const Floors: FC<FloorsProps> = ({
 
                                 {editingFloorId !== floor.id && (
                                     <div className="flex gap-2">
-                                        <Button
+                                        <PrimeButton
+                                            label=""
                                             icon="pi pi-pencil"
                                             className="p-button-sm p-button-outlined"
                                             onClick={e => {
@@ -132,7 +135,8 @@ export const Floors: FC<FloorsProps> = ({
                                                 startEditing(floor);
                                             }}
                                         />
-                                        <Button
+                                        <PrimeButton
+                                            label=""
                                             icon="pi pi-trash"
                                             className="p-button-sm p-button-danger p-button-outlined"
                                             onClick={e => {
@@ -140,7 +144,7 @@ export const Floors: FC<FloorsProps> = ({
                                                 confirmDeleteFloor(floor);
                                             }}
                                             disabled={floors.length <= 1}
-                                            tooltip={
+                                            title={
                                                 floors.length <= 1
                                                     ? "Mindestens ein Stockwerk muss existieren"
                                                     : "Stockwerk löschen"
@@ -155,13 +159,13 @@ export const Floors: FC<FloorsProps> = ({
             </div>
 
             <div className="grid grid-cols-[minmax(0,1fr)_max-content] gap-2 items-center w-full">
-                <InputText
+                <PrimeInputText
                     value={newFloorName}
                     onChange={e => setNewFloorName(e.target.value)}
                     placeholder="Stockwerkname"
                     className="flex-grow"
                 />
-                <Button icon="pi pi-plus" onClick={handleAddFloor} />
+                <PrimeButton label="" icon="pi pi-plus" onClick={handleAddFloor} />
             </div>
         </Panel>
     );

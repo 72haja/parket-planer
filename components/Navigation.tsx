@@ -5,10 +5,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
 import { Avatar } from "primereact/avatar";
-import { Button } from "primereact/button";
 import { Menu } from "primereact/menu";
 import { Menubar } from "primereact/menubar";
 import { useAuth } from "@/app/contexts/AuthContext";
+import { PrimeButton } from "@/lib/designSystem/atoms/PrimeButton";
 
 export const Navigation: FC = () => {
     const { user, loading, signOut } = useAuth();
@@ -108,10 +108,14 @@ export const Navigation: FC = () => {
             return (
                 <div className="flex gap-2">
                     <Link href="/auth/login">
-                        <Button label="Anmelden" icon="pi pi-sign-in" className="p-button-sm" />
+                        <PrimeButton
+                            label="Anmelden"
+                            icon="pi pi-sign-in"
+                            className="p-button-sm"
+                        />
                     </Link>
                     <Link href="/auth/register">
-                        <Button
+                        <PrimeButton
                             label="Registrieren"
                             icon="pi pi-user-plus"
                             className="p-button-outlined p-button-sm"

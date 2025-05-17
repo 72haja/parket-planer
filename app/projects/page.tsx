@@ -3,13 +3,13 @@
 import { FC, useEffect, useState } from "react";
 import { useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "primereact/button";
 import { Column } from "primereact/column";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { DataTable } from "primereact/datatable";
 import { Dialog } from "primereact/dialog";
-import { InputText } from "primereact/inputtext";
 import { Toast } from "primereact/toast";
+import { PrimeButton } from "@/lib/designSystem/atoms/PrimeButton";
+import { PrimeInputText } from "@/lib/designSystem/atoms/PrimeInputText";
 import { Project, supabase } from "@/lib/supabase";
 
 const ProjectManager: FC = () => {
@@ -165,17 +165,19 @@ const ProjectManager: FC = () => {
     const actionsTemplate = (rowData: Project) => {
         return (
             <div className="flex gap-2">
-                <Button
+                <PrimeButton
+                    label=""
                     icon="pi pi-pencil"
                     className="p-button-rounded p-button-success p-button-sm"
                     onClick={() => router.push(`/projects/${rowData.id}`)}
-                    tooltip="Bearbeiten"
+                    title="Bearbeiten"
                 />
-                <Button
+                <PrimeButton
+                    label=""
                     icon="pi pi-trash"
                     className="p-button-rounded p-button-danger p-button-sm"
                     onClick={() => confirmDeleteProject(rowData.id, rowData.name)}
-                    tooltip="Löschen"
+                    title="Löschen"
                 />
             </div>
         );
@@ -200,7 +202,7 @@ const ProjectManager: FC = () => {
 
             <div className="flex justify-between items-center mb-4">
                 <h2 className="text-2xl font-bold">Meine Projekte</h2>
-                <Button
+                <PrimeButton
                     label="Neues Projekt"
                     icon="pi pi-plus"
                     onClick={() => setShowNewProjectDialog(true)}
@@ -236,13 +238,13 @@ const ProjectManager: FC = () => {
                 onHide={() => setShowNewProjectDialog(false)}
                 footer={
                     <div>
-                        <Button
+                        <PrimeButton
                             label="Abbrechen"
                             icon="pi pi-times"
                             onClick={() => setShowNewProjectDialog(false)}
                             className="p-button-text"
                         />
-                        <Button
+                        <PrimeButton
                             label="Projekt erstellen"
                             icon="pi pi-check"
                             onClick={createProject}
@@ -255,7 +257,7 @@ const ProjectManager: FC = () => {
                         <label htmlFor="projectName" className="block mb-2">
                             Projektname
                         </label>
-                        <InputText
+                        <PrimeInputText
                             id="projectName"
                             value={newProjectName}
                             onChange={e => setNewProjectName(e.target.value)}

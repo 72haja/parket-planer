@@ -1,12 +1,12 @@
 "use client";
 
 import { FC, useEffect, useState } from "react";
-import { Button } from "primereact/button";
 import { Dropdown } from "primereact/dropdown";
-import { InputNumber } from "primereact/inputnumber";
-import { InputText } from "primereact/inputtext";
 import { Panel } from "primereact/panel";
 import { Slider } from "primereact/slider";
+import { PrimeButton } from "@/lib/designSystem/atoms/PrimeButton";
+import { PrimeInputNumber } from "@/lib/designSystem/atoms/PrimeInputNumber";
+import { PrimeInputText } from "@/lib/designSystem/atoms/PrimeInputText";
 import type { Flooring } from "@/lib/supabase";
 import { isEqual } from "@/lib/utils";
 
@@ -91,7 +91,7 @@ const TileSizeInputs: FC<TileSizeInputsProps> = ({
         <div className="grid grid-cols-1 gap-4 mb-4">
             <div>
                 <label className="block mb-1 font-medium">Fliesenbreite (cm)</label>
-                <InputNumber
+                <PrimeInputNumber
                     value={tileWidth}
                     onValueChange={e => setTileWidth(e.value ?? 0)}
                     min={1}
@@ -101,7 +101,7 @@ const TileSizeInputs: FC<TileSizeInputsProps> = ({
             </div>
             <div>
                 <label className="block mb-1 font-medium">Fliesenhöhe (cm)</label>
-                <InputNumber
+                <PrimeInputNumber
                     value={tileHeight}
                     onValueChange={e => setTileHeight(e.value ?? 0)}
                     min={1}
@@ -221,7 +221,7 @@ export const FlooringConfigurator: FC<FlooringConfiguratorProps> = ({
             <div className="space-y-4">
                 <div>
                     <label className="block mb-1 font-medium">Name</label>
-                    <InputText
+                    <PrimeInputText
                         value={name}
                         onChange={e => setName(e.target.value)}
                         className="w-full"
@@ -242,14 +242,14 @@ export const FlooringConfigurator: FC<FlooringConfiguratorProps> = ({
                 />
                 {/* Positionseingabe könnte hier als weiteres UI-Element ergänzt werden */}
                 <div className="flex gap-2">
-                    <Button
+                    <PrimeButton
                         label="Speichern"
                         icon="pi pi-save"
                         onClick={handleSave}
                         className="w-full"
                     />
                     {onCancel && (
-                        <Button
+                        <PrimeButton
                             label="Abbrechen"
                             icon="pi pi-times"
                             onClick={onCancel}

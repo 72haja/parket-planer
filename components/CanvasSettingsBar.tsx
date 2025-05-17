@@ -1,5 +1,6 @@
 import type { FC } from "react";
-import { InputSwitch } from "primereact/inputswitch";
+import { PrimeButton } from "@/lib/designSystem/atoms/PrimeButton";
+import { PrimeInputSwitch } from "@/lib/designSystem/atoms/PrimeInputSwitch";
 import { InfoTooltipButton } from "./InfoTooltipButton";
 
 interface CanvasSettingsBarProps {
@@ -27,12 +28,12 @@ export const CanvasSettingsBar: FC<CanvasSettingsBarProps> = ({
         <div className="flex items-center mb-2 justify-between">
             <div className="flex items-center">
                 <span className="mr-2">Zoom: {(zoom * 100).toFixed(0)}%</span>
-                <button
+                <PrimeButton
+                    label="Reset"
+                    className="p-1 px-2 border rounded bg-gray-100 hover:bg-gray-200 text-xs mr-4"
                     onClick={resetZoom}
-                    className="p-1 px-2 border rounded bg-gray-100 hover:bg-gray-200 text-xs mr-4">
-                    Reset
-                </button>
-                <InputSwitch
+                />
+                <PrimeInputSwitch
                     checked={snapEnabled}
                     onChange={e => setSnapEnabled(e.value)}
                     className="mr-2"
@@ -40,11 +41,11 @@ export const CanvasSettingsBar: FC<CanvasSettingsBarProps> = ({
                 <span className="mr-4">Snap</span>
                 <InfoTooltipButton show={showControlsTooltip} setShow={setShowControlsTooltip} />
             </div>
-            <button
+            <PrimeButton
+                label={fullscreen ? "Exit Fullscreen" : "Fullscreen"}
+                className="p-1 px-2 border rounded bg-gray-100 hover:bg-gray-200 text-xs"
                 onClick={() => setFullscreen(f => !f)}
-                className="p-1 px-2 border rounded bg-gray-100 hover:bg-gray-200 text-xs">
-                {fullscreen ? "Exit Fullscreen" : "Fullscreen"}
-            </button>
+            />
         </div>
     );
 };

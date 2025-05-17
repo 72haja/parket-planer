@@ -4,6 +4,7 @@ import { FC, Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card } from "primereact/card";
 import { ProgressSpinner } from "primereact/progressspinner";
+import { PrimeLoading } from "@/lib/designSystem/atoms/PrimeLoading";
 import { supabase } from "@/lib/supabase";
 
 const AuthCallback: FC = () => {
@@ -66,7 +67,7 @@ const AuthCallback: FC = () => {
 
 const AuthCallbackWithSuspense: FC = () => {
     return (
-        <Suspense>
+        <Suspense fallback={<PrimeLoading />}>
             <AuthCallback />
         </Suspense>
     );

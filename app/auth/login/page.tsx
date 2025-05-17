@@ -3,11 +3,12 @@
 import { FC, FormEvent, Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Button } from "primereact/button";
 import { Card } from "primereact/card";
-import { InputText } from "primereact/inputtext";
 import { Password } from "primereact/password";
 import { Toast } from "primereact/toast";
+import { PrimeButton } from "@/lib/designSystem/atoms/PrimeButton";
+import { PrimeInputText } from "@/lib/designSystem/atoms/PrimeInputText";
+import { PrimeLoading } from "@/lib/designSystem/atoms/PrimeLoading";
 import { supabase } from "@/lib/supabase";
 
 const Login: FC = () => {
@@ -85,7 +86,7 @@ const Login: FC = () => {
                         <label htmlFor="email" className="block mb-2">
                             E-Mail
                         </label>
-                        <InputText
+                        <PrimeInputText
                             id="email"
                             type="email"
                             value={email}
@@ -112,7 +113,12 @@ const Login: FC = () => {
                         />
                     </div>
 
-                    <Button type="submit" label="Anmelden" className="mb-4" loading={loading} />
+                    <PrimeButton
+                        type="submit"
+                        label="Anmelden"
+                        className="mb-4"
+                        loading={loading}
+                    />
 
                     <div className="text-center">
                         <p className="mt-3">
@@ -137,7 +143,7 @@ const Login: FC = () => {
 
 const LoginWithSuspense: FC = () => {
     return (
-        <Suspense>
+        <Suspense fallback={<PrimeLoading />}>
             <Login />
         </Suspense>
     );

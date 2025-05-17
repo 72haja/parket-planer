@@ -1,10 +1,10 @@
 import React, { FC, useEffect, useState } from "react";
 import clsx from "clsx";
-import { Button } from "primereact/button";
 import { Card } from "primereact/card";
 import { TabPanel, TabView } from "primereact/tabview";
 import { v4 as uuid } from "uuid";
 import { FlooringConfigurator } from "@/components/FlooringConfigurator";
+import { PrimeButton } from "@/lib/designSystem/atoms/PrimeButton";
 import { Floor, Flooring } from "@/lib/supabase";
 
 interface FlooringSectionProps {
@@ -127,7 +127,7 @@ export const FlooringSection: FC<FlooringSectionProps> = ({
                                             </div>
                                         </div>
                                         <div className="flex gap-2">
-                                            <Button
+                                            <PrimeButton
                                                 icon="pi pi-pencil"
                                                 className="p-button-rounded p-button-sm p-button-outlined"
                                                 onClick={e => {
@@ -135,7 +135,7 @@ export const FlooringSection: FC<FlooringSectionProps> = ({
                                                     setEditingFlooringId(flooring.id);
                                                 }}
                                             />
-                                            <Button
+                                            <PrimeButton
                                                 icon="pi pi-trash"
                                                 className="p-button-rounded p-button-danger p-button-sm"
                                                 onClick={e => {
@@ -189,7 +189,7 @@ export const FlooringSection: FC<FlooringSectionProps> = ({
                                 handleFlooringChanged={handleFlooringChanged}
                             />
                         ) : (
-                            <Button
+                            <PrimeButton
                                 label="Neuen Bodenbelag anlegen"
                                 onClick={handleStartCreate}
                                 className="w-full"

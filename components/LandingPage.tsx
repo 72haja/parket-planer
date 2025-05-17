@@ -3,11 +3,11 @@
 import { FC, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Button } from "primereact/button";
 import { Card } from "primereact/card";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { Toast } from "primereact/toast";
 import { useAuth } from "@/app/contexts/AuthContext";
+import { PrimeButton } from "@/lib/designSystem/atoms/PrimeButton";
 
 export const LandingPage: FC = () => {
     const { user, loading } = useAuth();
@@ -70,7 +70,7 @@ export const LandingPage: FC = () => {
 
             <div className="flex flex-col md:flex-row gap-4 justify-center">
                 <Link href="/projects/demo">
-                    <Button
+                    <PrimeButton
                         label="Demo starten"
                         icon="pi pi-play"
                         className="p-button-secondary p-button-lg"

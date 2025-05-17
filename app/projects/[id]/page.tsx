@@ -2,13 +2,13 @@
 
 import { FC, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Button } from "primereact/button";
 import { Card } from "primereact/card";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { Toast } from "primereact/toast";
 import { FlooringSection } from "@/components/FlooringSection";
 import { FloorplanCanvas } from "@/components/FloorplanCanvas";
 import { Floors } from "@/components/Floors";
+import { PrimeButton } from "@/lib/designSystem/atoms/PrimeButton";
 import { Floor, Flooring, FloorplanData, Project, supabase } from "@/lib/supabase";
 
 const ProjectPage: FC = () => {
@@ -289,7 +289,7 @@ const ProjectPage: FC = () => {
                         <p className="mb-3">
                             Das angeforderte Projekt konnte nicht gefunden werden.
                         </p>
-                        <Button
+                        <PrimeButton
                             label="Zurück zur Übersicht"
                             icon="pi pi-arrow-left"
                             onClick={() => router.push("/projects")}
@@ -326,7 +326,7 @@ const ProjectPage: FC = () => {
                 <div className="flex gap-2">
                     {saving && <ProgressSpinner style={{ width: "20px", height: "20px" }} />}
                     {!isDemo && (
-                        <Button
+                        <PrimeButton
                             label="Zurück"
                             icon="pi pi-arrow-left"
                             className="p-button-outlined"

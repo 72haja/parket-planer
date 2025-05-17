@@ -3,9 +3,9 @@
 import { ChangeEvent, FC, useEffect, useState } from "react";
 import clsx from "clsx";
 import { Avatar } from "primereact/avatar";
-import { Button } from "primereact/button";
 import { Password } from "primereact/password";
 import { useAuth } from "@/app/contexts/AuthContext";
+import { PrimeButton } from "@/lib/designSystem/atoms/PrimeButton";
 import { supabase } from "@/lib/supabase";
 
 const ProfilePage: FC = () => {
@@ -121,14 +121,14 @@ const ProfilePage: FC = () => {
                     {passwordSuccess && (
                         <p className="text-green-500 text-sm mb-4">{passwordSuccess}</p>
                     )}
-                    <Button
+                    <PrimeButton
                         label="Update Password"
                         onClick={handlePasswordChange}
                         className="w-full p-button-primary p-button-raised"
                     />
                 </div>
 
-                <Button
+                <PrimeButton
                     label="Sign Out"
                     className="p-button-danger w-full p-button-raised mt-4"
                     onClick={async () => {

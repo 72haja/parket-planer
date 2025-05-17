@@ -10,6 +10,7 @@ import { Dialog } from "primereact/dialog";
 import { Toast } from "primereact/toast";
 import { PrimeButton } from "@/lib/designSystem/atoms/PrimeButton";
 import { PrimeInputText } from "@/lib/designSystem/atoms/PrimeInputText";
+import { PrimeLoading } from "@/lib/designSystem/atoms/PrimeLoading";
 import { Project, supabase } from "@/lib/supabase";
 
 const ProjectManager: FC = () => {
@@ -209,28 +210,32 @@ const ProjectManager: FC = () => {
                 />
             </div>
 
-            <DataTable
-                value={projects}
-                paginator
-                rows={10}
-                loading={loading}
-                emptyMessage="Keine Projekte gefunden"
-                className="p-datatable-sm">
-                <Column field="name" header="Projektname" sortable />
-                <Column
-                    field="created_at"
-                    header="Erstellt am"
-                    sortable
-                    body={rowData => formatDate(rowData, "created_at")}
-                />
-                <Column
-                    field="updated_at"
-                    header="Zuletzt bearbeitet"
-                    sortable
-                    body={rowData => formatDate(rowData, "updated_at")}
-                />
-                <Column body={actionsTemplate} header="Aktionen" style={{ width: "10rem" }} />
-            </DataTable>
+            {loading ? (
+                <PrimeLoading />
+            ) : (
+                <DataTable
+                    value={projects}
+                    paginator
+                    rows={10}
+                    loading={loading}
+                    emptyMessage="Keine Projekte gefunden"
+                    className="p-datatable-sm">
+                    <Column field="name" header="Projektname" sortable />
+                    <Column
+                        field="created_at"
+                        header="Erstellt am"
+                        sortable
+                        body={rowData => formatDate(rowData, "created_at")}
+                    />
+                    <Column
+                        field="updated_at"
+                        header="Zuletzt bearbeitet"
+                        sortable
+                        body={rowData => formatDate(rowData, "updated_at")}
+                    />
+                    <Column body={actionsTemplate} header="Aktionen" style={{ width: "10rem" }} />
+                </DataTable>
+            )}
 
             <Dialog
                 header="Neues Projekt"

@@ -1,4 +1,5 @@
 import React from "react";
+import { InputSwitch } from "primereact/inputswitch";
 import InfoTooltipButton from "./InfoTooltipButton";
 
 const CanvasSettingsBar: React.FC<{
@@ -8,6 +9,8 @@ const CanvasSettingsBar: React.FC<{
     setShowControlsTooltip: (show: boolean) => void;
     fullscreen: boolean;
     setFullscreen: (f: (prev: boolean) => boolean) => void;
+    snapEnabled: boolean;
+    setSnapEnabled: (enabled: boolean) => void;
 }> = ({
     zoom,
     resetZoom,
@@ -15,6 +18,8 @@ const CanvasSettingsBar: React.FC<{
     setShowControlsTooltip,
     fullscreen,
     setFullscreen,
+    snapEnabled,
+    setSnapEnabled,
 }) => (
     <div className="flex items-center mb-2 justify-between">
         <div className="flex items-center">
@@ -24,6 +29,13 @@ const CanvasSettingsBar: React.FC<{
                 className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm transition-colors mr-2">
                 Reset View
             </button>
+            <label className="flex items-center mr-3 select-none cursor-pointer text-sm gap-2">
+                <InputSwitch
+                    checked={snapEnabled}
+                    onChange={(e: { value: boolean }) => setSnapEnabled(e.value)}
+                />
+                Snap
+            </label>
             <InfoTooltipButton show={showControlsTooltip} setShow={setShowControlsTooltip} />
         </div>
         <button

@@ -15,6 +15,7 @@ interface FloorplanCanvasProps {
 const FloorplanCanvas: FC<FloorplanCanvasProps> = ({ rectangles, setRectangles, flooring }) => {
     const [fullscreen, setFullscreen] = useState(false);
     const [showControlsTooltip, setShowControlsTooltip] = useState(false);
+    const [snapIsEnabled, setSnapIsEnabled] = useState(true);
 
     const {
         canvasRef,
@@ -32,7 +33,14 @@ const FloorplanCanvas: FC<FloorplanCanvasProps> = ({ rectangles, setRectangles, 
         setZoom,
         pan,
         setPan,
-    } = useFloorplanCanvas({ rectangles, setRectangles, fullscreen, flooring });
+    } = useFloorplanCanvas({
+        rectangles,
+        setRectangles,
+        fullscreen,
+        flooring,
+        snapIsEnabled,
+        setSnapIsEnabled,
+    });
 
     // Keyboard shortcuts and scroll lock remain in the component
     useEffect(() => {
@@ -94,6 +102,8 @@ const FloorplanCanvas: FC<FloorplanCanvasProps> = ({ rectangles, setRectangles, 
                 setShowControlsTooltip={setShowControlsTooltip}
                 fullscreen={fullscreen}
                 setFullscreen={setFullscreen}
+                snapEnabled={snapIsEnabled}
+                setSnapEnabled={setSnapIsEnabled}
             />
             <div
                 className={clsx(

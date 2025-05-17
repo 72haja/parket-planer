@@ -8,6 +8,8 @@ interface UseFloorplanCanvasProps {
     setRectangles: (rectangles: Rectangle[]) => void;
     fullscreen: boolean;
     flooring?: Flooring | null;
+    snapIsEnabled: boolean;
+    setSnapIsEnabled: (enabled: boolean) => void;
 }
 
 export function useFloorplanCanvas({
@@ -15,6 +17,8 @@ export function useFloorplanCanvas({
     setRectangles,
     fullscreen,
     flooring,
+    snapIsEnabled,
+    setSnapIsEnabled,
 }: UseFloorplanCanvasProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const canvasContainerRef = useRef<HTMLDivElement>(null);
@@ -255,9 +259,9 @@ export function useFloorplanCanvas({
             });
             return;
         }
-        // Use snapPoint as start position if present
+        // Use snapPoint as start position if present and snapping is enabled
         let position;
-        if (snapPoint) {
+        if (snapIsEnabled && snapPoint) {
             position = { ...snapPoint };
         } else {
             position = screenToCanvasCoords(e.clientX, e.clientY, canvas);
@@ -288,46 +292,49 @@ export function useFloorplanCanvas({
             return;
         }
         // Snap point logic (snap to nearest point on any side, not just center)
-        const mousePos = screenToCanvasCoords(e.clientX, e.clientY, canvas);
-        let minDist = Infinity;
-        let nearest: { x: number; y: number } | null = null;
-        rectangles.forEach(rect => {
-            const corners = [
-                { x: rect.x, y: rect.y },
-                { x: rect.x + rect.width, y: rect.y },
-                { x: rect.x + rect.width, y: rect.y + rect.height },
-                { x: rect.x, y: rect.y + rect.height },
-            ];
-            // Sides: [top, right, bottom, left]
-            const sides = [
-                [corners[0], corners[1]], // top
-                [corners[1], corners[2]], // right
-                [corners[2], corners[3]], // bottom
-                [corners[3], corners[0]], // left
-            ];
-            sides.forEach(([a, b]) => {
-                if (!a || !b) return;
-                // Project mousePos onto segment ab
-                const abx = b.x - a.x;
-                const aby = b.y - a.y;
-                const apx = mousePos.x - a.x;
-                const apy = mousePos.y - a.y;
-                const abLenSq = abx * abx + aby * aby;
-                let t = abLenSq === 0 ? 0 : (apx * abx + apy * aby) / abLenSq;
-                t = Math.max(0, Math.min(1, t));
-                const proj = { x: a.x + t * abx, y: a.y + t * aby };
-                const dist = Math.hypot(proj.x - mousePos.x, proj.y - mousePos.y);
-                if (dist < minDist) {
-                    minDist = dist;
-                    nearest = proj;
-                }
-            });
-        });
-        // Only show snap dot if within 20px (canvas units)
         let snapActive = false;
-        if (nearest && minDist < 20) {
-            setSnapPoint(nearest);
-            snapActive = true;
+        let nearest: { x: number; y: number } | null = null;
+        let minDist = Infinity;
+        const mousePos = screenToCanvasCoords(e.clientX, e.clientY, canvas);
+        if (snapIsEnabled) {
+            rectangles.forEach(rect => {
+                const corners = [
+                    { x: rect.x, y: rect.y },
+                    { x: rect.x + rect.width, y: rect.y },
+                    { x: rect.x + rect.width, y: rect.y + rect.height },
+                    { x: rect.x, y: rect.y + rect.height },
+                ];
+                // Sides: [top, right, bottom, left]
+                const sides = [
+                    [corners[0], corners[1]], // top
+                    [corners[1], corners[2]], // right
+                    [corners[2], corners[3]], // bottom
+                    [corners[3], corners[0]], // left
+                ];
+                sides.forEach(([a, b]) => {
+                    if (!a || !b) return;
+                    // Project mousePos onto segment ab
+                    const abx = b.x - a.x;
+                    const aby = b.y - a.y;
+                    const apx = mousePos.x - a.x;
+                    const apy = mousePos.y - a.y;
+                    const abLenSq = abx * abx + aby * aby;
+                    let t = abLenSq === 0 ? 0 : (apx * abx + apy * aby) / abLenSq;
+                    t = Math.max(0, Math.min(1, t));
+                    const proj = { x: a.x + t * abx, y: a.y + t * aby };
+                    const dist = Math.hypot(proj.x - mousePos.x, proj.y - mousePos.y);
+                    if (dist < minDist) {
+                        minDist = dist;
+                        nearest = proj;
+                    }
+                });
+            });
+            if (nearest && minDist < 20) {
+                setSnapPoint(nearest);
+                snapActive = true;
+            } else {
+                setSnapPoint(null);
+            }
         } else {
             setSnapPoint(null);
         }
@@ -337,7 +344,7 @@ export function useFloorplanCanvas({
             return;
         }
         let currentPos;
-        if (snapActive && nearest) {
+        if (snapIsEnabled && snapActive && nearest) {
             currentPos = nearest;
         } else {
             currentPos = mousePos;
@@ -365,9 +372,9 @@ export function useFloorplanCanvas({
             return;
         }
         const canvas = canvasRef.current;
-        // Use snapPoint as end position if present
+        // Use snapPoint as end position if present and snapping is enabled
         let endPos;
-        if (snapPoint) {
+        if (snapIsEnabled && snapPoint) {
             endPos = { ...snapPoint };
         } else {
             endPos = screenToCanvasCoords(e.clientX, e.clientY, canvas);
@@ -428,5 +435,7 @@ export function useFloorplanCanvas({
         pan,
         setPan,
         snapPoint,
+        snapIsEnabled,
+        setSnapIsEnabled,
     };
 }

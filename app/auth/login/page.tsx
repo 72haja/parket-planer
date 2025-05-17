@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FC, FormEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "primereact/button";
@@ -10,7 +10,7 @@ import { Password } from "primereact/password";
 import { Toast } from "primereact/toast";
 import { supabase } from "@/lib/supabase";
 
-export default function Login() {
+const Login: FC = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
@@ -133,4 +133,6 @@ export default function Login() {
             </Card>
         </div>
     );
-}
+};
+
+export default Login;

@@ -1,16 +1,16 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useAuth } from "@/app/contexts/AuthContext";
+import clsx from "clsx";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import clsx from "clsx";
 import { Avatar } from "primereact/avatar";
 import { Button } from "primereact/button";
 import { Menu } from "primereact/menu";
 import { Menubar } from "primereact/menubar";
-import { useAuth } from "@/app/contexts/AuthContext";
+import { FC, useEffect, useRef, useState } from "react";
 
-export default function Navigation() {
+export const Navigation: FC = () => {
     const { user, loading, signOut } = useAuth();
     const pathname = usePathname();
     const menuRef = useRef<Menu>(null);
@@ -32,7 +32,7 @@ export default function Navigation() {
             label: "Mein Konto",
             icon: "pi pi-user",
             command: () => {
-                window.location.href = "/profile"
+                window.location.href = "/profile";
             },
         },
         {
@@ -141,4 +141,4 @@ export default function Navigation() {
             />
         </header>
     );
-}
+};

@@ -1,9 +1,9 @@
-import { ReactNode } from "react";
+import { FC, PropsWithChildren, ReactNode } from "react";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "primeicons/primeicons.css";
 import { PrimeReactProvider } from "primereact/api";
-import Navigation from "@/components/Navigation";
+import { Navigation } from "@/components/Navigation";
 import { AuthProvider } from "./contexts/AuthContext";
 import "./globals.css";
 
@@ -14,11 +14,11 @@ export const metadata: Metadata = {
     description: "Interaktive Anwendung zum Zeichnen und Konfigurieren von Bodenplänen",
 };
 
-export default function RootLayout({
-    children,
-}: Readonly<{
+interface RootLayoutProps {
     children: ReactNode;
-}>) {
+}
+
+const RootLayout: FC<PropsWithChildren<RootLayoutProps>> = ({ children }) => {
     return (
         <html lang="de">
             <body className={inter.className}>
@@ -31,4 +31,6 @@ export default function RootLayout({
             </body>
         </html>
     );
-}
+};
+
+export default RootLayout;

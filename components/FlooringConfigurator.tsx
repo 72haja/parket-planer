@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import { Button } from "primereact/button";
 import { Dropdown } from "primereact/dropdown";
 import { InputNumber } from "primereact/inputnumber";
@@ -32,17 +32,19 @@ const offsetOptions: OptionType[] = [
     { label: "benutzerdefinierter Versatz", value: -1 },
 ];
 
-function OffsetSelector({
-    selectedOffset,
-    setSelectedOffset,
-    customOffset,
-    setCustomOffset,
-}: {
+interface OffsetSelectorProps {
     selectedOffset: number;
     setSelectedOffset: (v: number) => void;
     customOffset: number | null;
     setCustomOffset: (v: number | null) => void;
-}) {
+}
+
+const OffsetSelector: FC<OffsetSelectorProps> = ({
+    selectedOffset,
+    setSelectedOffset,
+    customOffset,
+    setCustomOffset,
+}) => {
     return (
         <div className="mb-4">
             <label className="block mb-1 font-medium">Versatz</label>
@@ -70,19 +72,21 @@ function OffsetSelector({
             )}
         </div>
     );
-}
+};
 
-function TileSizeInputs({
-    tileWidth,
-    setTileWidth,
-    tileHeight,
-    setTileHeight,
-}: {
+interface TileSizeInputsProps {
     tileWidth: number;
     setTileWidth: (v: number) => void;
     tileHeight: number;
     setTileHeight: (v: number) => void;
-}) {
+}
+
+const TileSizeInputs: FC<TileSizeInputsProps> = ({
+    tileWidth,
+    setTileWidth,
+    tileHeight,
+    setTileHeight,
+}) => {
     return (
         <div className="grid grid-cols-1 gap-4 mb-4">
             <div>
@@ -107,16 +111,16 @@ function TileSizeInputs({
             </div>
         </div>
     );
-}
+};
 
-export default function FlooringConfigurator({
+export const FlooringConfigurator: FC<FlooringConfiguratorProps> = ({
     floorId,
     onSave,
     existingFlooring,
     setSelectedFlooringId,
     onCancel,
     handleFlooringChanged,
-}: FlooringConfiguratorProps) {
+}) => {
     const [name, setName] = useState(existingFlooring?.name || "Neuer Bodenbelag");
     const [tileWidth, setTileWidth] = useState(existingFlooring?.tileWidth || 60);
     const [tileHeight, setTileHeight] = useState(existingFlooring?.tileHeight || 30);
@@ -256,4 +260,4 @@ export default function FlooringConfigurator({
             </div>
         </Panel>
     );
-}
+};

@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect } from "react";
+import { FC, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card } from "primereact/card";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { supabase } from "@/lib/supabase";
 
-export default function AuthCallback() {
+const AuthCallback: FC = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -62,4 +62,6 @@ export default function AuthCallback() {
             </Card>
         </div>
     );
-}
+};
+
+export default AuthCallback;

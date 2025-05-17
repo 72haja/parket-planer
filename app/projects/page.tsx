@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import { useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "primereact/button";
@@ -12,7 +12,7 @@ import { InputText } from "primereact/inputtext";
 import { Toast } from "primereact/toast";
 import { Project, supabase } from "@/lib/supabase";
 
-export default function ProjectManager() {
+const ProjectManager: FC = () => {
     const [projects, setProjects] = useState<Project[]>([]);
     const [newProjectName, setNewProjectName] = useState("");
     const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
@@ -267,4 +267,6 @@ export default function ProjectManager() {
             </Dialog>
         </div>
     );
-}
+};
+
+export default ProjectManager;

@@ -48,7 +48,7 @@ export function useFloorplanCanvas({
     // Dynamically set canvas size to match container using ResizeObserver
     useEffect(() => {
         let observer: ResizeObserver | null = null;
-        function updateCanvasSize() {
+        const updateCanvasSize = () => {
             let container: HTMLDivElement | null = null;
             let width = 800;
             let height = 600;
@@ -66,7 +66,7 @@ export function useFloorplanCanvas({
                 height = Math.floor(rect.height);
             }
             setCanvasDimensions({ width: Math.max(width, 200), height: Math.max(height, 200) });
-        }
+        };
         // Observe the relevant container for size changes
         const container =
             fullscreen && fullscreenContainerRef.current

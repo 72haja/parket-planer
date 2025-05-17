@@ -1,9 +1,10 @@
-import React, { FC, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import type { FC } from "react";
 import clsx from "clsx";
 import type { Flooring } from "@/lib/supabase";
 import { Rectangle } from "@/lib/types";
-import CanvasSettingsBar from "./CanvasSettingsBar";
-import RectangleList from "./RectangleList";
+import { CanvasSettingsBar } from "./CanvasSettingsBar";
+import { RectangleList } from "./RectangleList";
 import { useFloorplanCanvas } from "./useFloorplanCanvas";
 
 interface FloorplanCanvasProps {
@@ -12,7 +13,11 @@ interface FloorplanCanvasProps {
     flooring?: Flooring | null;
 }
 
-const FloorplanCanvas: FC<FloorplanCanvasProps> = ({ rectangles, setRectangles, flooring }) => {
+export const FloorplanCanvas: FC<FloorplanCanvasProps> = ({
+    rectangles,
+    setRectangles,
+    flooring,
+}) => {
     const [fullscreen, setFullscreen] = useState(false);
     const [showControlsTooltip, setShowControlsTooltip] = useState(false);
     const [snapIsEnabled, setSnapIsEnabled] = useState(true);
@@ -42,7 +47,6 @@ const FloorplanCanvas: FC<FloorplanCanvasProps> = ({ rectangles, setRectangles, 
         setSnapIsEnabled,
     });
 
-    // Keyboard shortcuts and scroll lock remain in the component
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === "Escape" && fullscreen) {
@@ -140,7 +144,7 @@ const FloorplanCanvas: FC<FloorplanCanvasProps> = ({ rectangles, setRectangles, 
                 <div className={fullscreen ? "w-full md:w-96 max-w-xs" : "w-full md:w-72"}>
                     <RectangleList
                         rectangles={rectangles}
-                        onDeleteRectangle={id => {
+                        onDeleteRectangle={(id: string) => {
                             const newRectangles = rectangles.filter(rect => rect.id !== id);
                             setRectangles(newRectangles);
                         }}
@@ -152,5 +156,3 @@ const FloorplanCanvas: FC<FloorplanCanvasProps> = ({ rectangles, setRectangles, 
         </div>
     );
 };
-
-export default FloorplanCanvas;

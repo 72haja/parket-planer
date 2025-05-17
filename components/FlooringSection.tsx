@@ -19,7 +19,7 @@ interface FlooringSectionProps {
     handleUpdateFlooring: (flooring: Flooring) => void;
 }
 
-const FlooringSection: FC<FlooringSectionProps> = ({
+export const FlooringSection: FC<FlooringSectionProps> = ({
     currentFloor,
     currentFloorFloorings,
     selectedFlooringId,
@@ -202,5 +202,3 @@ const FlooringSection: FC<FlooringSectionProps> = ({
         </Card>
     );
 };
-
-export default FlooringSection;

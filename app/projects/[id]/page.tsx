@@ -1,17 +1,17 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { FC, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "primereact/button";
 import { Card } from "primereact/card";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { Toast } from "primereact/toast";
-import FlooringSection from "@/components/FlooringSection";
-import FloorplanCanvas from "@/components/FloorplanCanvas";
-import Floors from "@/components/Floors";
+import { FlooringSection } from "@/components/FlooringSection";
+import { FloorplanCanvas } from "@/components/FloorplanCanvas";
+import { Floors } from "@/components/Floors";
 import { Floor, Flooring, FloorplanData, Project, supabase } from "@/lib/supabase";
 
-export default function ProjectPage() {
+const ProjectPage: FC = () => {
     const params = useParams();
     const projectId = params.id as string;
     const isDemo = projectId === "demo";
@@ -383,4 +383,6 @@ export default function ProjectPage() {
             </div>
         </div>
     );
-}
+};
+
+export default ProjectPage;

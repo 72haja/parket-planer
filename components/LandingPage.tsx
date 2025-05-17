@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { FC, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "primereact/button";
@@ -9,7 +9,7 @@ import { ProgressSpinner } from "primereact/progressspinner";
 import { Toast } from "primereact/toast";
 import { useAuth } from "@/app/contexts/AuthContext";
 
-export default function LandingPage() {
+export const LandingPage: FC = () => {
     const { user, loading } = useAuth();
     const router = useRouter();
     const toast = useRef<Toast>(null);
@@ -79,4 +79,4 @@ export default function LandingPage() {
             </div>
         </div>
     );
-}
+};

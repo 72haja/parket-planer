@@ -6,9 +6,9 @@ import clsx from "clsx";
 import { Avatar } from "primereact/avatar";
 import { Button } from "primereact/button";
 import { Password } from "primereact/password";
-import { ChangeEvent, useEffect, useState } from "react";
+import { ChangeEvent, FC, useEffect, useState } from "react";
 
-export default function ProfilePage() {
+const ProfilePage: FC = () => {
     const { user, loading } = useAuth();
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
@@ -144,3 +144,5 @@ export default function ProfilePage() {
         </div>
     );
 }
+
+export default ProfilePage;

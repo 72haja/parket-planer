@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { FC, useState } from "react";
 import { Button } from "primereact/button";
 import { confirmDialog } from "primereact/confirmdialog";
 import { InputText } from "primereact/inputtext";
@@ -17,14 +17,14 @@ interface FloorsProps {
     onDeleteFloor: (floorId: string) => void;
 }
 
-export default function Floors({
+export const Floors: FC<FloorsProps> = ({
     floors,
     selectedFloorIndex,
     onSelectFloor,
     onUpdateFloor,
     onAddFloor,
     onDeleteFloor,
-}: FloorsProps) {
+}) => {
     const [editingFloorId, setEditingFloorId] = useState<string | null>(null);
     const [newFloorName, setNewFloorName] = useState<string>("Neues Stockwerk");
     const [editedName, setEditedName] = useState<string>("");
@@ -165,4 +165,4 @@ export default function Floors({
             </div>
         </Panel>
     );
-}
+};

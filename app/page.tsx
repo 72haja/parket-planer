@@ -1,9 +1,12 @@
-import LandingPage from "@/components/LandingPage";
+import { FC } from "react";
+import { LandingPage } from "@/components/LandingPage";
 
-export default function Home() {
+const Home: FC = () => {
     return (
         <div className="z-10 w-full h-screen place-items-center text-sm lg:grid">
             <LandingPage />
         </div>
     );
-}
+};
+
+export default Home;

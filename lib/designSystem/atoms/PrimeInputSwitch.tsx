@@ -21,7 +21,7 @@ export const PrimeInputSwitch: FC<PrimeInputSwitchProps> = ({
 
     return (
         <div className={clsx("flex items-center gap-2", wrapperClassName)}>
-            {label && <label htmlFor={id}>{label}</label>}
+            {label && <label className="w-max" htmlFor={id}>{label}</label>}
             <InputSwitch id={id} {...props} className={className} />
         </div>
     );

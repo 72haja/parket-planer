@@ -1,5 +1,6 @@
 import type { FC } from "react";
 import { PrimeButton } from "@/lib/designSystem/atoms/PrimeButton";
+import { PrimeDivider } from "@/lib/designSystem/atoms/PrimeDivider";
 import { PrimeInputSwitch } from "@/lib/designSystem/atoms/PrimeInputSwitch";
 import { InfoTooltipButton } from "./InfoTooltipButton";
 
@@ -25,22 +26,23 @@ export const CanvasSettingsBar: FC<CanvasSettingsBarProps> = ({
     setSnapEnabled,
 }) => {
     return (
-        <div className="flex items-center mb-2 justify-between">
+        <div className="flex items-center mb-2 justify-between gap-4">
             <div className="flex items-center gap-2">
-                <span className="mr-2">Zoom: {(zoom * 100).toFixed(0)}%</span>
+                <InfoTooltipButton show={showControlsTooltip} setShow={setShowControlsTooltip} />
+                <span className="w-[100px]">Zoom: {(zoom * 100).toFixed(0)}%</span>
                 <PrimeButton
-                    label="Reset"
+                    label="Reset Zoom"
                     size="small"
                     className="p-1 px-2 border rounded bg-gray-100 hover:bg-gray-200 text-xs mr-4"
                     onClick={resetZoom}
                 />
+                <PrimeDivider layout="vertical" />
                 <PrimeInputSwitch
+                    label="Snap to rectangles"
                     checked={snapEnabled}
                     onChange={e => setSnapEnabled(e.value)}
                     className="mr-2"
                 />
-                <span className="mr-4">Snap</span>
-                <InfoTooltipButton show={showControlsTooltip} setShow={setShowControlsTooltip} />
             </div>
             <PrimeButton
                 label={fullscreen ? "Exit Fullscreen" : "Fullscreen"}

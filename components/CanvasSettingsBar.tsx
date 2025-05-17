@@ -17,7 +17,7 @@ const CanvasSettingsBar: React.FC<{
     setFullscreen,
 }) => (
     <div className="flex items-center mb-2 justify-between">
-        <div>
+        <div className="flex items-center">
             <span className="mr-2">Zoom: {(zoom * 100).toFixed(0)}%</span>
             <button
                 onClick={resetZoom}

@@ -4,7 +4,7 @@ import { Button } from "primereact/button";
 import { Card } from "primereact/card";
 import { TabPanel, TabView } from "primereact/tabview";
 import { v4 as uuid } from "uuid";
-import FlooringConfigurator from "@/components/FlooringConfigurator";
+import { FlooringConfigurator } from "@/components/FlooringConfigurator";
 import { Floor, Flooring } from "@/lib/supabase";
 
 interface FlooringSectionProps {

@@ -1,14 +1,14 @@
 "use client";
 
-import { useAuth } from "@/app/contexts/AuthContext";
-import clsx from "clsx";
+import { FC, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import clsx from "clsx";
 import { Avatar } from "primereact/avatar";
 import { Button } from "primereact/button";
 import { Menu } from "primereact/menu";
 import { Menubar } from "primereact/menubar";
-import { FC, useEffect, useRef, useState } from "react";
+import { useAuth } from "@/app/contexts/AuthContext";
 
 export const Navigation: FC = () => {
     const { user, loading, signOut } = useAuth();

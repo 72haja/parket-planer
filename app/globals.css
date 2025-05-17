@@ -1,20 +1,19 @@
 @import "tailwindcss";
 
 /* PrimeReact Theme-Import */
-@import 'primereact/resources/themes/lara-light-indigo/theme.css';
-@import 'primereact/resources/primereact.min.css';
-@import 'primeicons/primeicons.css';
+@import "primereact/resources/themes/lara-light-indigo/theme.css";
+@import "primereact/resources/primereact.min.css";
+@import "primeicons/primeicons.css";
 
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
+    --foreground-rgb: 0, 0, 0;
+    --background-start-rgb: 214, 219, 220;
+    --background-end-rgb: 255, 255, 255;
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))) rgb(var(--background-start-rgb));
-  min-height: 100vh;
+    background: linear-gradient(to bottom, transparent, rgb(var(--background-end-rgb)))
+        rgb(var(--background-start-rgb));
+    min-height: 100vh;
+    color: rgb(var(--foreground-rgb));
 }

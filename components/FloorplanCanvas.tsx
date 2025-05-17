@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import type { FC } from "react";
 import clsx from "clsx";
+import { useFloorplanCanvas } from "@/lib/hooks/useFloorplanCanvas";
 import type { Flooring } from "@/lib/supabase";
 import { Rectangle } from "@/lib/types";
-import { useFloorplanCanvas } from "@/lib/hooks/useFloorplanCanvas";
 import { CanvasSettingsBar } from "./CanvasSettingsBar";
 import { RectangleList } from "./RectangleList";
 

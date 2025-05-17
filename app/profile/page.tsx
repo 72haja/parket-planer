@@ -1,12 +1,12 @@
 "use client";
 
-import { useAuth } from "@/app/contexts/AuthContext";
-import { supabase } from "@/lib/supabase";
+import { ChangeEvent, FC, useEffect, useState } from "react";
 import clsx from "clsx";
 import { Avatar } from "primereact/avatar";
 import { Button } from "primereact/button";
 import { Password } from "primereact/password";
-import { ChangeEvent, FC, useEffect, useState } from "react";
+import { useAuth } from "@/app/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
 
 const ProfilePage: FC = () => {
     const { user, loading } = useAuth();
@@ -98,7 +98,7 @@ const ProfilePage: FC = () => {
                                 className="w-full [&>div]:w-full [&>div>input]:w-full"
                                 placeholder="Passwort eingeben"
                                 required
-                                />
+                            />
                         </div>
 
                         <div className="field">
@@ -143,6 +143,6 @@ const ProfilePage: FC = () => {
             </div>
         </div>
     );
-}
+};
 
 export default ProfilePage;

@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, FormEvent, useEffect, useRef, useState, Suspense } from "react";
+import { FC, FormEvent, Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "primereact/button";

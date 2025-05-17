@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, FormEvent, useEffect, useRef, useState } from "react";
+import { FC, FormEvent, useEffect, useRef, useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "primereact/button";
@@ -135,4 +135,12 @@ const Login: FC = () => {
     );
 };
 
-export default Login;
+const LoginWithSuspense: FC = () => {
+    return (
+        <Suspense>
+            <Login />
+        </Suspense>
+    );
+};
+
+export default LoginWithSuspense;

@@ -19,7 +19,7 @@ export const InfoTooltipButton: FC<InfoTooltipButtonProps> = ({ show, setShow })
                     <h3 className="font-semibold text-sm mb-1">Canvas Controls:</h3>
                     <ul className="space-y-1">
                         <li>
-                            <span className="font-medium">Draw:</span> Click and drag
+                            <span className="font-medium">Draw:</span> Click and drag if flooring is not shown
                         </li>
                         <li>
                             <span className="font-medium">Pan:</span> Hold Option/Alt + drag
@@ -29,6 +29,9 @@ export const InfoTooltipButton: FC<InfoTooltipButtonProps> = ({ show, setShow })
                         </li>
                         <li>
                             <span className="font-medium">Undo:</span> Cmd+Z / Ctrl+Z
+                        </li>
+                        <li>
+                            <span className="font-medium">Show Flooring:</span> Select flooring in the list on the left
                         </li>
                     </ul>
                 </div>

@@ -21,7 +21,7 @@ export const RectangleList: FC<RectangleListProps> = ({
     };
 
     return (
-        <div className="h-full bg-white rounded-md p-5 shadow-sm grid grid-cols-1 grid-rows-[max-content_minmax(0,1fr)]">
+        <div className="max-h-[400px] lg:max-h-none h-full bg-white rounded-md p-5 shadow-sm grid grid-cols-1 grid-rows-[max-content_minmax(0,1fr)]">
             <h2 className="text-lg font-semibold mb-4">Rectangles</h2>
             {rectangles.length === 0 ? (
                 <p className="text-gray-500 text-sm">No rectangles added yet</p>

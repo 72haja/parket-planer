@@ -2,6 +2,7 @@ import type { FC } from "react";
 import { PrimeButton } from "@/lib/designSystem/atoms/PrimeButton";
 import { PrimeDivider } from "@/lib/designSystem/atoms/PrimeDivider";
 import { PrimeInputSwitch } from "@/lib/designSystem/atoms/PrimeInputSwitch";
+import { DrawingTool } from "@/lib/types";
 import { InfoTooltipButton } from "./InfoTooltipButton";
 
 interface CanvasSettingsBarProps {
@@ -13,6 +14,8 @@ interface CanvasSettingsBarProps {
     setFullscreen: (f: (prev: boolean) => boolean) => void;
     snapEnabled: boolean;
     setSnapEnabled: (enabled: boolean) => void;
+    selectedTool: DrawingTool;
+    setSelectedTool: (tool: DrawingTool) => void;
 }
 
 export const CanvasSettingsBar: FC<CanvasSettingsBarProps> = ({
@@ -24,10 +27,12 @@ export const CanvasSettingsBar: FC<CanvasSettingsBarProps> = ({
     setFullscreen,
     snapEnabled,
     setSnapEnabled,
+    selectedTool,
+    setSelectedTool,
 }) => {
     return (
-        <div className="flex items-center mb-2 justify-between gap-4">
-            <div className="flex items-center gap-2">
+        <div className="flex items-center mb-2 justify-between gap-4 w-full flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap w-full">
                 <InfoTooltipButton show={showControlsTooltip} setShow={setShowControlsTooltip} />
                 <span className="w-[100px]">Zoom: {(zoom * 100).toFixed(0)}%</span>
                 <PrimeButton
@@ -36,6 +41,30 @@ export const CanvasSettingsBar: FC<CanvasSettingsBarProps> = ({
                     className="p-1 px-2 border rounded bg-gray-100 hover:bg-gray-200 text-xs mr-4"
                     onClick={resetZoom}
                 />
+                <PrimeDivider layout="vertical" />
+                <div className="flex items-center gap-2">
+                    <span className="text-xs">Tool:</span>
+                    <PrimeButton
+                        label="Rectangle"
+                        size="small"
+                        className={`p-1 px-2 border rounded text-xs ${
+                            selectedTool === DrawingTool.Rectangle
+                                ? "bg-blue-100 border-blue-300"
+                                : "bg-gray-100 hover:bg-gray-200"
+                        }`}
+                        onClick={() => setSelectedTool(DrawingTool.Rectangle)}
+                    />
+                    <PrimeButton
+                        label="Line"
+                        size="small"
+                        className={`p-1 px-2 border rounded text-xs ${
+                            selectedTool === DrawingTool.Line
+                                ? "bg-blue-100 border-blue-300"
+                                : "bg-gray-100 hover:bg-gray-200"
+                        }`}
+                        onClick={() => setSelectedTool(DrawingTool.Line)}
+                    />
+                </div>
                 <PrimeDivider layout="vertical" />
                 <PrimeInputSwitch
                     label="Snap to rectangles"

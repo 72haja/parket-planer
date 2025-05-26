@@ -3,8 +3,9 @@ import type { FC } from "react";
 import clsx from "clsx";
 import { useFloorplanCanvas } from "@/lib/hooks/useFloorplanCanvas";
 import type { Flooring } from "@/lib/supabase";
-import { Rectangle } from "@/lib/types";
+import { DrawingTool, Line, Rectangle } from "@/lib/types";
 import { CanvasSettingsBar } from "./CanvasSettingsBar";
+import { LineList } from "./LineList";
 import { RectangleList } from "./RectangleList";
 
 interface FloorplanCanvasProps {
@@ -21,6 +22,8 @@ export const FloorplanCanvas: FC<FloorplanCanvasProps> = ({
     const [fullscreen, setFullscreen] = useState(false);
     const [showControlsTooltip, setShowControlsTooltip] = useState(false);
     const [snapIsEnabled, setSnapIsEnabled] = useState(true);
+    const [selectedTool, setSelectedTool] = useState<DrawingTool>(DrawingTool.Rectangle);
+    const [lines, setLines] = useState<Line[]>([]);
 
     const {
         canvasRef,
@@ -30,6 +33,8 @@ export const FloorplanCanvas: FC<FloorplanCanvasProps> = ({
         isPanning,
         hoveredRectangleId,
         setHoveredRectangleId,
+        hoveredLineId,
+        setHoveredLineId,
         handleMouseDown,
         handleMouseMove,
         handleMouseUp,
@@ -41,10 +46,13 @@ export const FloorplanCanvas: FC<FloorplanCanvasProps> = ({
     } = useFloorplanCanvas({
         rectangles,
         setRectangles,
+        lines,
+        setLines,
         fullscreen,
         flooring,
         snapIsEnabled,
         setSnapIsEnabled,
+        selectedTool,
     });
 
     useEffect(() => {
@@ -55,10 +63,14 @@ export const FloorplanCanvas: FC<FloorplanCanvasProps> = ({
             }
             if ((e.key === "z" || e.key === "Z") && (e.metaKey || e.ctrlKey)) {
                 e.preventDefault();
-                if (rectangles.length > 0) {
+                if (selectedTool === DrawingTool.Rectangle && rectangles.length > 0) {
                     const newRectangles = [...rectangles];
                     newRectangles.pop();
                     setRectangles(newRectangles);
+                } else if (selectedTool === DrawingTool.Line && lines.length > 0) {
+                    const newLines = [...lines];
+                    newLines.pop();
+                    setLines(newLines);
                 }
             }
         };
@@ -73,7 +85,18 @@ export const FloorplanCanvas: FC<FloorplanCanvasProps> = ({
             window.removeEventListener("keydown", handleKeyDown);
             window.removeEventListener("keyup", handleKeyUp);
         };
-    }, [fullscreen, rectangles, setRectangles, isPanning, setPan, pan.x, pan.y]);
+    }, [
+        fullscreen,
+        rectangles,
+        setRectangles,
+        lines,
+        setLines,
+        isPanning,
+        setPan,
+        pan.x,
+        pan.y,
+        selectedTool,
+    ]);
 
     useEffect(() => {
         if (fullscreen) {
@@ -99,6 +122,7 @@ export const FloorplanCanvas: FC<FloorplanCanvasProps> = ({
                 fullscreen &&
                     "h-screen w-screen fixed inset-0 z-50 bg-white p-4 md:p-8 transition-all duration-300"
             )}>
+            {" "}
             <CanvasSettingsBar
                 zoom={zoom}
                 resetZoom={resetZoom}
@@ -108,6 +132,8 @@ export const FloorplanCanvas: FC<FloorplanCanvasProps> = ({
                 setFullscreen={setFullscreen}
                 snapEnabled={snapIsEnabled}
                 setSnapEnabled={setSnapIsEnabled}
+                selectedTool={selectedTool}
+                setSelectedTool={setSelectedTool}
             />
             <div
                 className={clsx(
@@ -142,15 +168,30 @@ export const FloorplanCanvas: FC<FloorplanCanvasProps> = ({
                     />
                 </div>
                 <div className={fullscreen ? "w-full md:w-96 max-w-xs" : "w-full md:w-72"}>
-                    <RectangleList
-                        rectangles={rectangles}
-                        onDeleteRectangle={(id: string) => {
-                            const newRectangles = rectangles.filter(rect => rect.id !== id);
-                            setRectangles(newRectangles);
-                        }}
-                        setHoveredRectangleId={setHoveredRectangleId}
-                        hoveredRectangleId={hoveredRectangleId}
-                    />
+                    <div className="space-y-4">
+                        {selectedTool === DrawingTool.Rectangle && (
+                            <RectangleList
+                                rectangles={rectangles}
+                                onDeleteRectangle={(id: string) => {
+                                    const newRectangles = rectangles.filter(rect => rect.id !== id);
+                                    setRectangles(newRectangles);
+                                }}
+                                setHoveredRectangleId={setHoveredRectangleId}
+                                hoveredRectangleId={hoveredRectangleId}
+                            />
+                        )}
+                        {selectedTool === DrawingTool.Line && (
+                            <LineList
+                                lines={lines}
+                                onDeleteLine={(id: string) => {
+                                    const newLines = lines.filter(line => line.id !== id);
+                                    setLines(newLines);
+                                }}
+                                setHoveredLineId={setHoveredLineId}
+                                hoveredLineId={hoveredLineId}
+                            />
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

@@ -1,24 +1,30 @@
 import { MouseEvent, WheelEvent, useCallback, useEffect, useRef, useState } from "react";
 import { v4 as uuid } from "uuid";
 import type { Flooring } from "@/lib/supabase";
-import { Rectangle } from "@/lib/types";
+import { DrawingTool, Line, Rectangle } from "@/lib/types";
 
 interface UseFloorplanCanvasProps {
     rectangles: Rectangle[];
     setRectangles: (rectangles: Rectangle[]) => void;
+    lines: Line[];
+    setLines: (lines: Line[]) => void;
     fullscreen: boolean;
     flooring?: Flooring | null;
     snapIsEnabled: boolean;
     setSnapIsEnabled: (enabled: boolean) => void;
+    selectedTool: DrawingTool;
 }
 
 export function useFloorplanCanvas({
     rectangles,
     setRectangles,
+    lines,
+    setLines,
     fullscreen,
     flooring,
     snapIsEnabled,
     setSnapIsEnabled,
+    selectedTool,
 }: UseFloorplanCanvasProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const canvasContainerRef = useRef<HTMLDivElement>(null);
@@ -31,6 +37,7 @@ export function useFloorplanCanvas({
     const [zoom, setZoom] = useState(1);
     const [pan, setPan] = useState({ x: 0, y: 0 });
     const [hoveredRectangleId, setHoveredRectangleId] = useState<string | null>(null);
+    const [hoveredLineId, setHoveredLineId] = useState<string | null>(null);
 
     // Track flooring drag state
     const [isDraggingFlooring, setIsDraggingFlooring] = useState(false);
@@ -128,6 +135,54 @@ export function useFloorplanCanvas({
         ctx.lineWidth = 1;
     };
 
+    // Helper function to draw a line with labels
+    const drawLineWithLabels = (
+        ctx: CanvasRenderingContext2D,
+        x1: number,
+        y1: number,
+        x2: number,
+        y2: number,
+        isHighlighted: boolean = false
+    ) => {
+        // Calculate length of line
+        const length = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+
+        // Set styles based on highlight status
+        if (isHighlighted) {
+            ctx.strokeStyle = "#3b82f6";
+            ctx.lineWidth = 2;
+        } else {
+            ctx.strokeStyle = "black";
+            ctx.lineWidth = 1;
+        }
+
+        // Draw the line
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+
+        // Add length label
+        ctx.font = "12px Arial";
+        ctx.fillStyle = isHighlighted ? "#3b82f6" : "black";
+
+        // Position the label slightly above the middle of the line
+        const midX = (x1 + x2) / 2;
+        const midY = (y1 + y2) / 2;
+
+        // Calculate the angle of the line
+        const angle = Math.atan2(y2 - y1, x2 - x1);
+
+        // Draw the text rotated to match the line angle
+        ctx.save();
+        ctx.translate(midX, midY);
+        ctx.rotate(angle);
+        ctx.translate(0, -10); // Offset above the line
+        ctx.textAlign = "center";
+        ctx.fillText(`${length.toFixed(0)}px`, 0, 0);
+        ctx.restore();
+    };
+
     // Helper to draw the flooring pattern
     const drawFlooringPattern = useCallback(
         (ctx: CanvasRenderingContext2D, flooring: Flooring, width: number, height: number) => {
@@ -174,6 +229,8 @@ export function useFloorplanCanvas({
             if (flooring) {
                 drawFlooringPattern(ctx, flooring, canvas.width, canvas.height);
             }
+
+            // Draw rectangles
             rectangles.forEach(rect => {
                 const isHighlighted = rect.id === hoveredRectangleId;
                 drawRectangleWithLabels(
@@ -185,6 +242,13 @@ export function useFloorplanCanvas({
                     isHighlighted
                 );
             });
+
+            // Draw lines
+            lines.forEach(line => {
+                const isHighlighted = line.id === hoveredLineId;
+                drawLineWithLabels(ctx, line.x1, line.y1, line.x2, line.y2, isHighlighted);
+            });
+
             // Draw snap point if present
             if (snapPoint) {
                 ctx.save();
@@ -199,27 +263,35 @@ export function useFloorplanCanvas({
                 ctx.stroke();
                 ctx.restore();
             }
-            // Draw preview rectangle if drawing
+
+            // Draw preview based on the selected tool
             if (isDrawing && startPos && previewEnd) {
                 ctx.save();
-                const width = previewEnd.x - startPos.x;
-                const height = previewEnd.y - startPos.y;
-                drawRectangleWithLabels(ctx, startPos.x, startPos.y, width, height);
+                if (selectedTool === DrawingTool.Rectangle) {
+                    const width = previewEnd.x - startPos.x;
+                    const height = previewEnd.y - startPos.y;
+                    drawRectangleWithLabels(ctx, startPos.x, startPos.y, width, height);
+                } else if (selectedTool === DrawingTool.Line) {
+                    drawLineWithLabels(ctx, startPos.x, startPos.y, previewEnd.x, previewEnd.y);
+                }
                 ctx.restore();
             }
             ctx.restore();
         }
     }, [
         rectangles,
+        lines,
         zoom,
         pan,
         hoveredRectangleId,
+        hoveredLineId,
         flooring,
         snapPoint,
         drawFlooringPattern,
         isDrawing,
         startPos,
         previewEnd,
+        selectedTool,
     ]);
 
     // Redraw on changes
@@ -296,7 +368,9 @@ export function useFloorplanCanvas({
         let nearest: { x: number; y: number } | null = null;
         let minDist = Infinity;
         const mousePos = screenToCanvasCoords(e.clientX, e.clientY, canvas);
+
         if (snapIsEnabled) {
+            // Snap to rectangle corners and sides
             rectangles.forEach(rect => {
                 const corners = [
                     { x: rect.x, y: rect.y },
@@ -329,6 +403,40 @@ export function useFloorplanCanvas({
                     }
                 });
             });
+
+            // Snap to line endpoints
+            lines.forEach(line => {
+                const endpoints = [
+                    { x: line.x1, y: line.y1 },
+                    { x: line.x2, y: line.y2 },
+                ];
+
+                endpoints.forEach(point => {
+                    const dist = Math.hypot(point.x - mousePos.x, point.y - mousePos.y);
+                    if (dist < minDist) {
+                        minDist = dist;
+                        nearest = point;
+                    }
+                });
+
+                // Also snap to points along the line
+                const a = { x: line.x1, y: line.y1 };
+                const b = { x: line.x2, y: line.y2 };
+                const abx = b.x - a.x;
+                const aby = b.y - a.y;
+                const apx = mousePos.x - a.x;
+                const apy = mousePos.y - a.y;
+                const abLenSq = abx * abx + aby * aby;
+                let t = abLenSq === 0 ? 0 : (apx * abx + apy * aby) / abLenSq;
+                t = Math.max(0, Math.min(1, t));
+                const proj = { x: a.x + t * abx, y: a.y + t * aby };
+                const dist = Math.hypot(proj.x - mousePos.x, proj.y - mousePos.y);
+                if (dist < minDist) {
+                    minDist = dist;
+                    nearest = proj;
+                }
+            });
+
             if (nearest && minDist < 20) {
                 setSnapPoint(nearest);
                 snapActive = true;
@@ -338,11 +446,13 @@ export function useFloorplanCanvas({
         } else {
             setSnapPoint(null);
         }
-        // Rectangle preview: use local nearest if snapping, else mouse
+
+        // Drawing preview: use local nearest if snapping, else mouse
         if (!isDrawing || !startPos) {
             setPreviewEnd(null);
             return;
         }
+
         let currentPos;
         if (snapIsEnabled && snapActive && nearest) {
             currentPos = nearest;
@@ -350,7 +460,6 @@ export function useFloorplanCanvas({
             currentPos = mousePos;
         }
         setPreviewEnd(currentPos);
-        // Don't draw here, let redrawCanvas handle it
     };
 
     const handleMouseUp = (e: MouseEvent<HTMLCanvasElement>) => {
@@ -371,6 +480,7 @@ export function useFloorplanCanvas({
             setPreviewEnd(null);
             return;
         }
+
         const canvas = canvasRef.current;
         // Use snapPoint as end position if present and snapping is enabled
         let endPos;
@@ -379,21 +489,39 @@ export function useFloorplanCanvas({
         } else {
             endPos = screenToCanvasCoords(e.clientX, e.clientY, canvas);
         }
-        const width = endPos.x - startPos.x;
-        const height = endPos.y - startPos.y;
-        if (Math.abs(width) > 0 && Math.abs(height) > 0) {
-            const newRectangle: Rectangle = {
-                id: uuid(),
-                x: startPos.x,
-                y: startPos.y,
-                width,
-                height,
-            };
-            const newRectangles = [...rectangles, newRectangle];
-            setRectangles(newRectangles);
-        } else {
-            redrawCanvas();
+
+        if (selectedTool === DrawingTool.Rectangle) {
+            const width = endPos.x - startPos.x;
+            const height = endPos.y - startPos.y;
+            if (Math.abs(width) > 0 && Math.abs(height) > 0) {
+                const newRectangle: Rectangle = {
+                    id: uuid(),
+                    x: startPos.x,
+                    y: startPos.y,
+                    width,
+                    height,
+                };
+                setRectangles([...rectangles, newRectangle]);
+            }
+        } else if (selectedTool === DrawingTool.Line) {
+            // Don't create lines that are too short
+            const dx = endPos.x - startPos.x;
+            const dy = endPos.y - startPos.y;
+            const length = Math.sqrt(dx * dx + dy * dy);
+
+            if (length > 5) {
+                // Minimum length to avoid accidental clicks
+                const newLine: Line = {
+                    id: uuid(),
+                    x1: startPos.x,
+                    y1: startPos.y,
+                    x2: endPos.x,
+                    y2: endPos.y,
+                };
+                setLines([...lines, newLine]);
+            }
         }
+
         setIsDrawing(false);
         setStartPos(null);
         setPreviewEnd(null);
@@ -426,6 +554,8 @@ export function useFloorplanCanvas({
         isPanning,
         hoveredRectangleId,
         setHoveredRectangleId,
+        hoveredLineId,
+        setHoveredLineId,
         handleMouseDown,
         handleMouseMove,
         handleMouseUp,

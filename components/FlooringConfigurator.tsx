@@ -93,7 +93,7 @@ const TileSizeInputs: FC<TileSizeInputsProps> = ({
                 <label className="block mb-1 font-medium">Fliesenbreite (cm)</label>
                 <PrimeInputNumber
                     value={tileWidth}
-                    onValueChange={e => setTileWidth(e.value ?? 0)}
+                    onValueChange={e => setTileWidth(e.value ?? 1)}
                     min={1}
                     max={500}
                     className="w-full"
@@ -103,7 +103,7 @@ const TileSizeInputs: FC<TileSizeInputsProps> = ({
                 <label className="block mb-1 font-medium">Fliesenhöhe (cm)</label>
                 <PrimeInputNumber
                     value={tileHeight}
-                    onValueChange={e => setTileHeight(e.value ?? 0)}
+                    onValueChange={e => setTileHeight(e.value ?? 1)}
                     min={1}
                     max={500}
                     className="w-full"

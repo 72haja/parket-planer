@@ -36,8 +36,10 @@ export function useFloorplanCanvas({
     const [lastPanPos, setLastPanPos] = useState<{ x: number; y: number } | null>(null);
     const [zoom, setZoom] = useState(1);
     const [pan, setPan] = useState({ x: 0, y: 0 });
-    const [hoveredRectangleId, setHoveredRectangleId] = useState<string | null>(null);
-    const [hoveredLineId, setHoveredLineId] = useState<string | null>(null);
+    const [hoveredItemForDeletion, setHoveredItemForDeletion] = useState<{
+        type: "rectangle" | "line";
+        id: string;
+    } | null>(null);
 
     // Track flooring drag state
     const [isDraggingFlooring, setIsDraggingFlooring] = useState(false);
@@ -102,24 +104,32 @@ export function useFloorplanCanvas({
         y: number,
         width: number,
         height: number,
-        isHighlighted: boolean = false
+        isHighlighted: boolean = false,
+        isDeleteMode: boolean = false
     ) => {
         const normalizedX = width < 0 ? x + width : x;
         const normalizedY = height < 0 ? y + height : y;
         const normalizedWidth = Math.abs(width);
         const normalizedHeight = Math.abs(height);
         if (isHighlighted) {
-            ctx.strokeStyle = "#3b82f6";
-            ctx.lineWidth = 2;
-            ctx.fillStyle = "rgba(59, 130, 246, 0.1)";
-            ctx.fillRect(x, y, width, height);
+            if (isDeleteMode) {
+                ctx.strokeStyle = "#ef4444";
+                ctx.lineWidth = 2;
+                ctx.fillStyle = "rgba(239, 68, 68, 0.1)";
+                ctx.fillRect(x, y, width, height);
+            } else {
+                ctx.strokeStyle = "#3b82f6";
+                ctx.lineWidth = 2;
+                ctx.fillStyle = "rgba(59, 130, 246, 0.1)";
+                ctx.fillRect(x, y, width, height);
+            }
         } else {
             ctx.strokeStyle = "black";
             ctx.lineWidth = 1;
         }
         ctx.strokeRect(x, y, width, height);
         ctx.font = "12px Arial";
-        ctx.fillStyle = isHighlighted ? "#3b82f6" : "black";
+        ctx.fillStyle = isHighlighted ? (isDeleteMode ? "#ef4444" : "#3b82f6") : "black";
         ctx.textAlign = "center";
         ctx.fillText(
             `${normalizedWidth.toFixed(0)}px`,
@@ -142,15 +152,21 @@ export function useFloorplanCanvas({
         y1: number,
         x2: number,
         y2: number,
-        isHighlighted: boolean = false
+        isHighlighted: boolean = false,
+        isDeleteMode: boolean = false
     ) => {
         // Calculate length of line
         const length = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
 
         // Set styles based on highlight status
         if (isHighlighted) {
-            ctx.strokeStyle = "#3b82f6";
-            ctx.lineWidth = 2;
+            if (isDeleteMode) {
+                ctx.strokeStyle = "#ef4444";
+                ctx.lineWidth = 2;
+            } else {
+                ctx.strokeStyle = "#3b82f6";
+                ctx.lineWidth = 2;
+            }
         } else {
             ctx.strokeStyle = "black";
             ctx.lineWidth = 1;
@@ -164,7 +180,7 @@ export function useFloorplanCanvas({
 
         // Add length label
         ctx.font = "12px Arial";
-        ctx.fillStyle = isHighlighted ? "#3b82f6" : "black";
+        ctx.fillStyle = isHighlighted ? (isDeleteMode ? "#ef4444" : "#3b82f6") : "black";
 
         // Position the label slightly above the middle of the line
         const midX = (x1 + x2) / 2;
@@ -232,21 +248,32 @@ export function useFloorplanCanvas({
 
             // Draw rectangles
             rectangles.forEach(rect => {
-                const isHighlighted = rect.id === hoveredRectangleId;
+                const isHighlighted = false;
+                const isDeleteMode = selectedTool === DrawingTool.Delete;
                 drawRectangleWithLabels(
                     ctx,
                     rect.x,
                     rect.y,
                     rect.width,
                     rect.height,
-                    isHighlighted
+                    isHighlighted,
+                    isDeleteMode
                 );
             });
 
             // Draw lines
             lines.forEach(line => {
-                const isHighlighted = line.id === hoveredLineId;
-                drawLineWithLabels(ctx, line.x1, line.y1, line.x2, line.y2, isHighlighted);
+                const isHighlighted = false;
+                const isDeleteMode = selectedTool === DrawingTool.Delete;
+                drawLineWithLabels(
+                    ctx,
+                    line.x1,
+                    line.y1,
+                    line.x2,
+                    line.y2,
+                    isHighlighted,
+                    isDeleteMode
+                );
             });
 
             // Draw snap point if present
@@ -270,9 +297,25 @@ export function useFloorplanCanvas({
                 if (selectedTool === DrawingTool.Rectangle) {
                     const width = previewEnd.x - startPos.x;
                     const height = previewEnd.y - startPos.y;
-                    drawRectangleWithLabels(ctx, startPos.x, startPos.y, width, height);
+                    drawRectangleWithLabels(
+                        ctx,
+                        startPos.x,
+                        startPos.y,
+                        width,
+                        height,
+                        false,
+                        false
+                    );
                 } else if (selectedTool === DrawingTool.Line) {
-                    drawLineWithLabels(ctx, startPos.x, startPos.y, previewEnd.x, previewEnd.y);
+                    drawLineWithLabels(
+                        ctx,
+                        startPos.x,
+                        startPos.y,
+                        previewEnd.x,
+                        previewEnd.y,
+                        false,
+                        false
+                    );
                 }
                 ctx.restore();
             }
@@ -283,8 +326,6 @@ export function useFloorplanCanvas({
         lines,
         zoom,
         pan,
-        hoveredRectangleId,
-        hoveredLineId,
         flooring,
         snapPoint,
         drawFlooringPattern,
@@ -309,6 +350,57 @@ export function useFloorplanCanvas({
         return { x, y };
     };
 
+    // Collision detection helpers
+    const isPointInRectangle = (point: { x: number; y: number }, rect: Rectangle): boolean => {
+        const normalizedX = rect.width < 0 ? rect.x + rect.width : rect.x;
+        const normalizedY = rect.height < 0 ? rect.y + rect.height : rect.y;
+        const normalizedWidth = Math.abs(rect.width);
+        const normalizedHeight = Math.abs(rect.height);
+
+        return (
+            point.x >= normalizedX &&
+            point.x <= normalizedX + normalizedWidth &&
+            point.y >= normalizedY &&
+            point.y <= normalizedY + normalizedHeight
+        );
+    };
+
+    const isPointNearLine = (
+        point: { x: number; y: number },
+        line: Line,
+        threshold: number = 5
+    ): boolean => {
+        const A = point.x - line.x1;
+        const B = point.y - line.y1;
+        const C = line.x2 - line.x1;
+        const D = line.y2 - line.y1;
+
+        const dot = A * C + B * D;
+        const lengthSq = C * C + D * D;
+
+        if (lengthSq === 0) {
+            return Math.hypot(A, B) <= threshold;
+        }
+
+        const param = dot / lengthSq;
+
+        let xx, yy;
+        if (param < 0) {
+            xx = line.x1;
+            yy = line.y1;
+        } else if (param > 1) {
+            xx = line.x2;
+            yy = line.y2;
+        } else {
+            xx = line.x1 + param * C;
+            yy = line.y1 + param * D;
+        }
+
+        const dx = point.x - xx;
+        const dy = point.y - yy;
+        return Math.hypot(dx, dy) <= threshold;
+    };
+
     // Mouse event handlers
     const handleMouseDown = (e: MouseEvent<HTMLCanvasElement>) => {
         const canvas = canvasRef.current;
@@ -321,6 +413,22 @@ export function useFloorplanCanvas({
             setLastPanPos({ x: e.clientX, y: e.clientY });
             return;
         }
+
+        // Handle delete mode clicks
+        if (selectedTool === DrawingTool.Delete && hoveredItemForDeletion) {
+            if (hoveredItemForDeletion.type === "rectangle") {
+                const newRectangles = rectangles.filter(
+                    rect => rect.id !== hoveredItemForDeletion.id
+                );
+                setRectangles(newRectangles);
+            } else if (hoveredItemForDeletion.type === "line") {
+                const newLines = lines.filter(line => line.id !== hoveredItemForDeletion.id);
+                setLines(newLines);
+            }
+            setHoveredItemForDeletion(null);
+            return;
+        }
+
         // If a flooring is selected, start dragging it
         if (flooring) {
             setIsDraggingFlooring(true);
@@ -447,6 +555,32 @@ export function useFloorplanCanvas({
             setSnapPoint(null);
         }
 
+        // Handle delete mode - check for hovering over rectangles/lines
+        if (selectedTool === DrawingTool.Delete) {
+            const mousePos = screenToCanvasCoords(e.clientX, e.clientY, canvas);
+            let foundHoveredItem: { type: "rectangle" | "line"; id: string } | null = null;
+
+            // Check rectangles first
+            for (const rect of rectangles) {
+                if (isPointInRectangle(mousePos, rect)) {
+                    foundHoveredItem = { type: "rectangle", id: rect.id };
+                    break;
+                }
+            }
+
+            // If no rectangle found, check lines
+            if (!foundHoveredItem) {
+                for (const line of lines) {
+                    if (isPointNearLine(mousePos, line, 10)) {
+                        foundHoveredItem = { type: "line", id: line.id };
+                        break;
+                    }
+                }
+            }
+
+            setHoveredItemForDeletion(foundHoveredItem);
+        }
+
         // Drawing preview: use local nearest if snapping, else mouse
         if (!isDrawing || !startPos) {
             setPreviewEnd(null);
@@ -552,10 +686,7 @@ export function useFloorplanCanvas({
         canvasDimensions,
         isDrawing,
         isPanning,
-        hoveredRectangleId,
-        setHoveredRectangleId,
-        hoveredLineId,
-        setHoveredLineId,
+        hoveredItemForDeletion,
         handleMouseDown,
         handleMouseMove,
         handleMouseUp,

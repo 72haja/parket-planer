@@ -2,6 +2,7 @@ import type { FC } from "react";
 import { PrimeButton } from "@/lib/designSystem/atoms/PrimeButton";
 import { PrimeDivider } from "@/lib/designSystem/atoms/PrimeDivider";
 import { PrimeInputSwitch } from "@/lib/designSystem/atoms/PrimeInputSwitch";
+import { XIcon } from "@/lib/designSystem/icons";
 import { DrawingTool } from "@/lib/types";
 import { InfoTooltipButton } from "./InfoTooltipButton";
 
@@ -63,6 +64,17 @@ export const CanvasSettingsBar: FC<CanvasSettingsBarProps> = ({
                                 : "bg-gray-100 hover:bg-gray-200"
                         }`}
                         onClick={() => setSelectedTool(DrawingTool.Line)}
+                    />
+                    <PrimeButton
+                        label="Delete"
+                        size="small"
+                        className={`p-1 px-2 border rounded text-xs ${
+                            selectedTool === DrawingTool.Delete
+                                ? "bg-red-100 border-red-300"
+                                : "bg-gray-100 hover:bg-gray-200"
+                        }`}
+                        onClick={() => setSelectedTool(DrawingTool.Delete)}
+                        icon={<XIcon />}
                     />
                 </div>
                 <PrimeDivider layout="vertical" />

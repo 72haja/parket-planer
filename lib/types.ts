@@ -1,6 +1,7 @@
 export enum DrawingTool {
     Rectangle = "rectangle",
     Line = "line",
+    Delete = "delete",
 }
 
 export interface Rectangle {

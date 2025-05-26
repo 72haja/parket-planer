@@ -5,8 +5,6 @@ import { useFloorplanCanvas } from "@/lib/hooks/useFloorplanCanvas";
 import type { Flooring } from "@/lib/supabase";
 import { DrawingTool, Line, Rectangle } from "@/lib/types";
 import { CanvasSettingsBar } from "./CanvasSettingsBar";
-import { LineList } from "./LineList";
-import { RectangleList } from "./RectangleList";
 
 interface FloorplanCanvasProps {
     rectangles: Rectangle[];
@@ -31,10 +29,7 @@ export const FloorplanCanvas: FC<FloorplanCanvasProps> = ({
         fullscreenContainerRef,
         canvasDimensions,
         isPanning,
-        hoveredRectangleId,
-        setHoveredRectangleId,
-        hoveredLineId,
-        setHoveredLineId,
+        hoveredItemForDeletion,
         handleMouseDown,
         handleMouseMove,
         handleMouseUp,
@@ -135,19 +130,21 @@ export const FloorplanCanvas: FC<FloorplanCanvasProps> = ({
                 selectedTool={selectedTool}
                 setSelectedTool={setSelectedTool}
             />
-            <div
-                className={clsx(
-                    "flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-6",
-                    "flex-1 h-0 min-h-0"
-                )}>
-                <div ref={canvasContainerRef} style={{ position: "relative", minHeight: 200 }}>
+            <div className="flex flex-col md:flex-row flex-1 h-0 min-h-0">
+                <div ref={canvasContainerRef} className="relative min-h-[200px] w-full">
                     <canvas
                         ref={canvasRef}
                         width={canvasDimensions.width}
                         height={canvasDimensions.height}
                         className={clsx(
                             "w-full h-full border border-gray-200 rounded-md shadow-sm bg-white",
-                            isPanning ? "cursor-move" : "cursor-crosshair",
+                            isPanning
+                                ? "cursor-move"
+                                : selectedTool === DrawingTool.Delete
+                                  ? hoveredItemForDeletion
+                                      ? "cursor-delete"
+                                      : "cursor-default"
+                                  : "cursor-crosshair",
                             fullscreen && "max-h-full max-w-full"
                         )}
                         onMouseEnter={() => {
@@ -166,32 +163,6 @@ export const FloorplanCanvas: FC<FloorplanCanvasProps> = ({
                         }}
                         onWheel={handleWheel}
                     />
-                </div>
-                <div className={fullscreen ? "w-full md:w-96 max-w-xs" : "w-full md:w-72"}>
-                    <div className="space-y-4">
-                        {selectedTool === DrawingTool.Rectangle && (
-                            <RectangleList
-                                rectangles={rectangles}
-                                onDeleteRectangle={(id: string) => {
-                                    const newRectangles = rectangles.filter(rect => rect.id !== id);
-                                    setRectangles(newRectangles);
-                                }}
-                                setHoveredRectangleId={setHoveredRectangleId}
-                                hoveredRectangleId={hoveredRectangleId}
-                            />
-                        )}
-                        {selectedTool === DrawingTool.Line && (
-                            <LineList
-                                lines={lines}
-                                onDeleteLine={(id: string) => {
-                                    const newLines = lines.filter(line => line.id !== id);
-                                    setLines(newLines);
-                                }}
-                                setHoveredLineId={setHoveredLineId}
-                                hoveredLineId={hoveredLineId}
-                            />
-                        )}
-                    </div>
                 </div>
             </div>
         </div>

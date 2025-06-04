@@ -11,8 +11,6 @@ interface CanvasSettingsBarProps {
     resetZoom: () => void;
     showControlsTooltip: boolean;
     setShowControlsTooltip: (show: boolean) => void;
-    fullscreen: boolean;
-    setFullscreen: (f: (prev: boolean) => boolean) => void;
     snapEnabled: boolean;
     setSnapEnabled: (enabled: boolean) => void;
     selectedTool: DrawingTool;
@@ -24,8 +22,6 @@ export const CanvasSettingsBar: FC<CanvasSettingsBarProps> = ({
     resetZoom,
     showControlsTooltip,
     setShowControlsTooltip,
-    fullscreen,
-    setFullscreen,
     snapEnabled,
     setSnapEnabled,
     selectedTool,
@@ -79,18 +75,13 @@ export const CanvasSettingsBar: FC<CanvasSettingsBarProps> = ({
                 </div>
                 <PrimeDivider layout="vertical" />
                 <PrimeInputSwitch
-                    label="Snap to rectangles"
+                    label="Snap"
+                    tooltip="Smart snap (points, angles & edges)"
                     checked={snapEnabled}
                     onChange={e => setSnapEnabled(e.value)}
                     className="mr-2"
                 />
             </div>
-            <PrimeButton
-                label={fullscreen ? "Exit Fullscreen" : "Fullscreen"}
-                size="small"
-                className="p-1 px-2 border rounded bg-gray-100 hover:bg-gray-200 text-xs"
-                onClick={() => setFullscreen(f => !f)}
-            />
         </div>
     );
 };

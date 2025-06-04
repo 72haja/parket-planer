@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import type { FC } from "react";
 import clsx from "clsx";
+import { PrimeButton } from "@/lib/designSystem/atoms/PrimeButton";
+import { CollapseIcon, ExpandIcon } from "@/lib/designSystem/icons";
 import { useFloorplanCanvas } from "@/lib/hooks/useFloorplanCanvas";
 import type { Flooring } from "@/lib/supabase";
 import { DrawingTool, Line, Rectangle } from "@/lib/types";
@@ -123,8 +125,6 @@ export const FloorplanCanvas: FC<FloorplanCanvasProps> = ({
                 resetZoom={resetZoom}
                 showControlsTooltip={showControlsTooltip}
                 setShowControlsTooltip={setShowControlsTooltip}
-                fullscreen={fullscreen}
-                setFullscreen={setFullscreen}
                 snapEnabled={snapIsEnabled}
                 setSnapEnabled={setSnapIsEnabled}
                 selectedTool={selectedTool}
@@ -132,6 +132,16 @@ export const FloorplanCanvas: FC<FloorplanCanvasProps> = ({
             />
             <div className="flex flex-col md:flex-row flex-1 h-0 min-h-0">
                 <div ref={canvasContainerRef} className="relative min-h-[200px] w-full">
+                    {/* Fullscreen Button */}
+                    <div className="absolute top-2 right-2 z-10">
+                        <PrimeButton
+                            icon={fullscreen ? <CollapseIcon /> : <ExpandIcon />}
+                            size="small"
+                            className="p-2 border rounded bg-white hover:bg-gray-50 shadow-sm"
+                            onClick={() => setFullscreen(f => !f)}
+                            tooltip={fullscreen ? "Exit Fullscreen" : "Fullscreen"}
+                        />
+                    </div>
                     <canvas
                         ref={canvasRef}
                         width={canvasDimensions.width}

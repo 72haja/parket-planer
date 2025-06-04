@@ -731,6 +731,31 @@ export function useFloorplanCanvas({
                 }
             });
 
+            // Also snap to points along the extension guide if it's active
+            if (extensionGuide && extensionGuide.isActive) {
+                const guideStart = { x: extensionGuide.x1, y: extensionGuide.y1 };
+                const guideEnd = { x: extensionGuide.x2, y: extensionGuide.y2 };
+                
+                // Project mouse position onto the extension guide line
+                const abx = guideEnd.x - guideStart.x;
+                const aby = guideEnd.y - guideStart.y;
+                const apx = mousePos.x - guideStart.x;
+                const apy = mousePos.y - guideStart.y;
+                const abLenSq = abx * abx + aby * aby;
+                
+                if (abLenSq > 0) {
+                    const t = (apx * abx + apy * aby) / abLenSq;
+                    // Don't clamp t - allow snapping anywhere along the infinite extension line
+                    const proj = { x: guideStart.x + t * abx, y: guideStart.y + t * aby };
+                    const dist = Math.hypot(proj.x - mousePos.x, proj.y - mousePos.y);
+                    
+                    if (dist < minDist) {
+                        minDist = dist;
+                        nearest = proj;
+                    }
+                }
+            }
+
             if (nearest && minDist < 20) {
                 setSnapPoint(nearest);
                 snapActive = true;

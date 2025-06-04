@@ -51,6 +51,15 @@ export function useFloorplanCanvas({
     // Snap point state
     const [snapPoint, setSnapPoint] = useState<{ x: number; y: number } | null>(null);
 
+    // Extension line guide state
+    const [extensionGuide, setExtensionGuide] = useState<{
+        x1: number;
+        y1: number;
+        x2: number;
+        y2: number;
+        isActive: boolean;
+    } | null>(null);
+
     // Store the last preview end position for stable preview rendering
     const [previewEnd, setPreviewEnd] = useState<{ x: number; y: number } | null>(null);
 
@@ -291,6 +300,17 @@ export function useFloorplanCanvas({
                 ctx.restore();
             }
 
+            // Draw extension guide if present
+            if (extensionGuide && extensionGuide.isActive) {
+                drawExtensionGuide(
+                    ctx,
+                    extensionGuide.x1,
+                    extensionGuide.y1,
+                    extensionGuide.x2,
+                    extensionGuide.y2
+                );
+            }
+
             // Draw preview based on the selected tool
             if (isDrawing && startPos && previewEnd) {
                 ctx.save();
@@ -328,6 +348,7 @@ export function useFloorplanCanvas({
         pan,
         flooring,
         snapPoint,
+        extensionGuide,
         drawFlooringPattern,
         isDrawing,
         startPos,
@@ -339,6 +360,153 @@ export function useFloorplanCanvas({
     useEffect(() => {
         redrawCanvas();
     }, [redrawCanvas, canvasDimensions]);
+
+    // Helper function to calculate distance from point to line
+    const distanceFromPointToLine = (
+        point: { x: number; y: number },
+        lineStart: { x: number; y: number },
+        lineEnd: { x: number; y: number }
+    ): number => {
+        const A = point.x - lineStart.x;
+        const B = point.y - lineStart.y;
+        const C = lineEnd.x - lineStart.x;
+        const D = lineEnd.y - lineStart.y;
+
+        const dot = A * C + B * D;
+        const lengthSq = C * C + D * D;
+
+        if (lengthSq === 0) {
+            return Math.hypot(A, B);
+        }
+
+        const param = dot / lengthSq;
+        const xx = lineStart.x + param * C;
+        const yy = lineStart.y + param * D;
+
+        const dx = point.x - xx;
+        const dy = point.y - yy;
+        return Math.hypot(dx, dy);
+    };
+
+    // Helper function to find extension line guides from rectangles
+    const findExtensionLineGuide = (
+        mousePos: { x: number; y: number },
+        canvasWidth: number,
+        canvasHeight: number
+    ): {
+        x1: number;
+        y1: number;
+        x2: number;
+        y2: number;
+        distance: number;
+    } | null => {
+        const SNAP_TOLERANCE = 10;
+        let closestGuide: {
+            x1: number;
+            y1: number;
+            x2: number;
+            y2: number;
+            distance: number;
+        } | null = null;
+        let minDistance = Infinity;
+
+        rectangles.forEach(rect => {
+            // Calculate normalized rectangle bounds
+            const normalizedX = rect.width < 0 ? rect.x + rect.width : rect.x;
+            const normalizedY = rect.height < 0 ? rect.y + rect.height : rect.y;
+            const normalizedWidth = Math.abs(rect.width);
+            const normalizedHeight = Math.abs(rect.height);
+
+            // Define the four edges of the rectangle
+            const edges = [
+                // Top edge
+                {
+                    start: { x: normalizedX, y: normalizedY },
+                    end: { x: normalizedX + normalizedWidth, y: normalizedY },
+                    isHorizontal: true
+                },
+                // Right edge
+                {
+                    start: { x: normalizedX + normalizedWidth, y: normalizedY },
+                    end: { x: normalizedX + normalizedWidth, y: normalizedY + normalizedHeight },
+                    isHorizontal: false
+                },
+                // Bottom edge
+                {
+                    start: { x: normalizedX + normalizedWidth, y: normalizedY + normalizedHeight },
+                    end: { x: normalizedX, y: normalizedY + normalizedHeight },
+                    isHorizontal: true
+                },
+                // Left edge
+                {
+                    start: { x: normalizedX, y: normalizedY + normalizedHeight },
+                    end: { x: normalizedX, y: normalizedY },
+                    isHorizontal: false
+                }
+            ];
+
+            edges.forEach(edge => {
+                let extendedLine: { x1: number; y1: number; x2: number; y2: number };
+
+                if (edge.isHorizontal) {
+                    // Horizontal line - extend left and right across canvas
+                    const y = edge.start.y;
+                    extendedLine = {
+                        x1: -canvasWidth / zoom,
+                        y1: y,
+                        x2: canvasWidth / zoom,
+                        y2: y
+                    };
+                } else {
+                    // Vertical line - extend up and down across canvas
+                    const x = edge.start.x;
+                    extendedLine = {
+                        x1: x,
+                        y1: -canvasHeight / zoom,
+                        x2: x,
+                        y2: canvasHeight / zoom
+                    };
+                }
+
+                // Calculate distance from mouse to this extended line
+                const distance = distanceFromPointToLine(
+                    mousePos,
+                    { x: extendedLine.x1, y: extendedLine.y1 },
+                    { x: extendedLine.x2, y: extendedLine.y2 }
+                );
+
+                if (distance <= SNAP_TOLERANCE && distance < minDistance) {
+                    minDistance = distance;
+                    closestGuide = {
+                        ...extendedLine,
+                        distance
+                    };
+                }
+            });
+        });
+
+        return closestGuide;
+    };
+
+    // Helper function to draw dotted extension guide line
+    const drawExtensionGuide = (
+        ctx: CanvasRenderingContext2D,
+        x1: number,
+        y1: number,
+        x2: number,
+        y2: number
+    ) => {
+        ctx.save();
+        ctx.strokeStyle = "#10b981";
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([5, 5]); // 5 pixels on, 5 pixels off
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+        ctx.setLineDash([]); // Reset line dash
+        ctx.restore();
+    };
 
     // Convert screen coordinates to canvas coordinates considering zoom
     const screenToCanvasCoords = (clientX: number, clientY: number, canvas: HTMLCanvasElement) => {
@@ -476,6 +644,24 @@ export function useFloorplanCanvas({
         let nearest: { x: number; y: number } | null = null;
         let minDist = Infinity;
         const mousePos = screenToCanvasCoords(e.clientX, e.clientY, canvas);
+
+        // Update extension guide based on mouse position
+        if (snapIsEnabled) {
+            const guide = findExtensionLineGuide(mousePos, canvas.width, canvas.height);
+            if (guide) {
+                setExtensionGuide({
+                    x1: guide.x1,
+                    y1: guide.y1,
+                    x2: guide.x2,
+                    y2: guide.y2,
+                    isActive: true
+                });
+            } else {
+                setExtensionGuide(null);
+            }
+        } else {
+            setExtensionGuide(null);
+        }
 
         if (snapIsEnabled) {
             // Snap to rectangle corners and sides
@@ -696,6 +882,7 @@ export function useFloorplanCanvas({
         pan,
         setPan,
         snapPoint,
+        extensionGuide,
         snapIsEnabled,
         setSnapIsEnabled,
     };
